@@ -8,15 +8,14 @@ use Psalm\Codebase;
 use Psalm\CodeLocation;
 use Psalm\Context;
 use Psalm\FileManipulation;
-use Psalm\Internal\Analyzer\CommentAnalyzer;
 use Psalm\IssueBuffer;
 use Psalm\Plugin\Hook\AfterExpressionAnalysisInterface;
 use Psalm\StatementsSource;
-use Psalm\Type\Union;
 
 final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterface
 {
-
+    /** @var array<string, \Psalm\Type\Union> */
+    private static $initializeContextVars;
 
     /**
      * Called after an expression has been checked
@@ -35,41 +34,24 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
         array &$file_replacements = []
     ) {
 
-//        var_dump($context->vars_in_scope);
-
-        if ($expr instanceof PhpParser\Node\Expr\Assign) {
-            if ($expr->var instanceof PhpParser\Node\Expr\Variable) {
-                var_dump($expr->var->name);
-            }
-
-            return null;
-//            var_dump($expr->var->n);
-
-            $doc_comment = $expr->var->getDocComment();
-
-            if ($doc_comment) {
-                $types = CommentAnalyzer::getTypeFromComment($expr->var->getDocComment(), $statements_source, $statements_source->getAliases());
-
-                if (count($types) === 0) {
-                    return null;
+        if ($expr instanceof PhpParser\Node\Expr\Assign && $expr->var instanceof PhpParser\Node\Expr\Variable) {
+            if (isset($context->vars_in_scope['$'.$expr->var->name])) {
+                if (! isset(self::$initializeContextVars[$expr->var->name])) {
+                    self::$initializeContextVars[$expr->var->name] = $context->vars_in_scope['$'.$expr->var->name];
                 }
+
+                $varInScope = self::$initializeContextVars[$expr->var->name];
 
                 $originalTypes = [];
-                foreach ($types as $type) {
-                    if ($type->type instanceof Union) {
-                        foreach ($type->type->getAtomicTypes() as $atomicType) {
-                            $originalTypes[] = (string)$atomicType;
-                        }
-                    } else {
-                        $originalTypes[] = $type->original_type;
-                    }
+                foreach ($varInScope->getAtomicTypes() as $atomicType) {
+                    $originalTypes[] = (string)$atomicType;
                 }
 
-                $expr_type = $statements_source->getNodeTypeProvider()->getType($expr->expr);
+                $assignType = $statements_source->getNodeTypeProvider()->getType($expr->expr);
 
                 $type_matched = false;
                 $atomicTypes = [];
-                foreach ($expr_type->getAtomicTypes() as $k => $atomicType) {
+                foreach ($assignType->getAtomicTypes() as $k => $atomicType) {
                     if ($atomicType->isObjectType()) {
                         $class = (string) $atomicType;
                         foreach ($originalTypes as $originalType) {
@@ -98,7 +80,7 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
                 if (!$type_matched) {
                     if (IssueBuffer::accepts(
                         new UnmatchedTypeIssue(
-                            sprintf('original types are %s, but assigned types are %s', implode(',', $originalTypes), implode(',', $atomicTypes)),
+                            sprintf('original types are %s, but assigned types are %s', implode('|', $originalTypes), implode('|', $atomicTypes)),
                             new CodeLocation($statements_source, $expr->expr)
                         ),
                         $statements_source->getSuppressedIssues()
@@ -110,4 +92,3 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
         }
     }
 }
-
