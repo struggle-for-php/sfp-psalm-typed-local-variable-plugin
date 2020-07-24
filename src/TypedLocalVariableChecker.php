@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Sfp\Psalm\TypedLocalVariablePlugin;
 
 use PhpParser;
-use PhpParser\Node\Expr\FuncCall;
 use Psalm\Codebase;
 use Psalm\CodeLocation;
 use Psalm\Context;
