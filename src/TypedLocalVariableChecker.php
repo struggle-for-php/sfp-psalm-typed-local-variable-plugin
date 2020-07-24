@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Sfp\Psalm\TypedLocalVariablePlugin;
 
 use PhpParser;
-use PhpParser\Node\Stmt;
 use Psalm\Codebase;
 use Psalm\CodeLocation;
 use Psalm\Context;
@@ -12,22 +11,11 @@ use Psalm\FileManipulation;
 use Psalm\Internal\Analyzer\CommentAnalyzer;
 use Psalm\IssueBuffer;
 use Psalm\Plugin\Hook\AfterExpressionAnalysisInterface;
-use Psalm\Plugin\Hook\AfterStatementAnalysisInterface;
 use Psalm\StatementsSource;
 use Psalm\Type\Union;
 
-final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterface, AfterStatementAnalysisInterface
+final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterface
 {
-    public static function afterStatementAnalysis(
-        Stmt $stmt,
-        Context $context,
-        StatementsSource $statements_source,
-        Codebase $codebase,
-        array &$file_replacements = []
-    ) {
-//        var_dump($stmt->getDocComment());
-        var_dump($context->getScopeSummary());
-    }
 
 
     /**
@@ -46,9 +34,16 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
         Codebase $codebase,
         array &$file_replacements = []
     ) {
-        return null;
+
+//        var_dump($context->vars_in_scope);
 
         if ($expr instanceof PhpParser\Node\Expr\Assign) {
+            if ($expr->var instanceof PhpParser\Node\Expr\Variable) {
+                var_dump($expr->var->name);
+            }
+
+            return null;
+//            var_dump($expr->var->n);
 
             $doc_comment = $expr->var->getDocComment();
 
