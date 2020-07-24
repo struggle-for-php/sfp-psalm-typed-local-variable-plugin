@@ -36,7 +36,8 @@
       "SfpTest\\Psalm\\TypedLocalVariablePlugin\\": [
         "tests/_support",
         "tests/acceptance"
-      ]
+      ],
+      "SfpTest\\Psalm\\TypedLocalVariablePlugin\\Unit\\": "tests/Unit"
     }
   },
   "scripts" : {
