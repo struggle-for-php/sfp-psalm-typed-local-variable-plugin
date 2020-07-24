@@ -1,0 +1,53 @@
+{
+  "name": "struggle-for-php/sfp-psalm-typed-local-variable-plugin",
+  "description": "",
+  "keywords": ["psalm", "psalm-plugin", "static analysis", "static-analysis"],
+  "type": "psalm-plugin",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "sasezaki",
+      "email": "sasezaki@gmail.com"
+    }
+  ],
+  "require": {
+    "php" : ">=7.1.0",
+    "ext-simplexml": "*",
+    "vimeo/psalm": "^3.12"
+  },
+  "require-dev": {
+    "psr/log": "^1.1",
+    "squizlabs/php_codesniffer": "^3.3",
+    "codeception/base": "^3.1",
+    "weirdan/codeception-psalm-module": "^0.2.2"
+  },
+  "extra": {
+    "psalm" : {
+      "pluginClass": "Sfp\\Psalm\\TypedLocalVariablePlugin\\Plugin"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Sfp\\Psalm\\TypedLocalVariablePlugin\\": "src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "SfpTest\\Psalm\\TypedLocalVariablePlugin\\": [
+        "tests/_support",
+        "tests/acceptance"
+      ]
+    }
+  },
+  "scripts" : {
+    "check": [
+      "@cs-check",
+      "@test",
+      "@analyze"
+    ],
+    "analyze": "psalm",
+    "cs-check": "phpcs",
+    "cs-fix": "phpcbf",
+    "test": "codecept run -v"
+  }
+}
