@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Sfp\Psalm\TypedLocalVariablePlugin;
 
 use PhpParser;
+use PhpParser\Node\Stmt;
 use Psalm\Codebase;
 use Psalm\CodeLocation;
 use Psalm\Context;
@@ -11,10 +12,12 @@ use Psalm\FileManipulation;
 use Psalm\IssueBuffer;
 use Psalm\Plugin\Hook\AfterExpressionAnalysisInterface;
 use Psalm\Plugin\Hook\AfterFunctionLikeAnalysisInterface;
+use Psalm\Plugin\Hook\AfterStatementAnalysisInterface;
 use Psalm\StatementsSource;
 use Psalm\Storage\FunctionLikeStorage;
 
 final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterface, AfterFunctionLikeAnalysisInterface
+
 {
     /** @var array<string, \Psalm\Type\Union> */
     private static $initializeContextVars;
@@ -47,10 +50,24 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
     ) {
 
         if ($expr instanceof PhpParser\Node\Expr\Assign && $expr->var instanceof PhpParser\Node\Expr\Variable) {
+
+
             if (isset($context->vars_in_scope['$'.$expr->var->name])) {
+                // hold variable initialize type
                 if (! isset(self::$initializeContextVars[$expr->var->name])) {
-                    self::$initializeContextVars[$expr->var->name] = $context->vars_in_scope['$'.$expr->var->name];
+
+                    if ($context->calling_method_id) {
+                        $method_id = new \Psalm\Internal\MethodIdentifier(...explode('::', $context->calling_method_id));
+                        foreach ($codebase->methods->getStorage($method_id)->params as $param) {
+                            self::$initializeContextVars[$param->name] = $param->type;
+                        }
+                    }
+
+                    if (! isset(self::$initializeContextVars[$expr->var->name])) {
+                        self::$initializeContextVars[$expr->var->name] = $context->vars_in_scope['$'.$expr->var->name];
+                    }
                 }
+
 
                 $varInScope = self::$initializeContextVars[$expr->var->name];
 

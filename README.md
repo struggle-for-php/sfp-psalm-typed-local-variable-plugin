@@ -11,6 +11,7 @@ This is VERY VERY VERY **Experimental** .
 * NOT support variables in namespace. 
 
 ## Todo
+* Support Closure scope isolated from function scope.
 * Support intersect type.
 * ... And more tests.
 
