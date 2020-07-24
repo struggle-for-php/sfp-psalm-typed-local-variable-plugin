@@ -4,18 +4,31 @@ declare(strict_types=1);
 namespace Sfp\Psalm\TypedLocalVariablePlugin;
 
 use PhpParser;
+use PhpParser\Node\Expr\FuncCall;
 use Psalm\Codebase;
 use Psalm\CodeLocation;
 use Psalm\Context;
 use Psalm\FileManipulation;
 use Psalm\IssueBuffer;
 use Psalm\Plugin\Hook\AfterExpressionAnalysisInterface;
+use Psalm\Plugin\Hook\AfterFunctionLikeAnalysisInterface;
 use Psalm\StatementsSource;
+use Psalm\Storage\FunctionLikeStorage;
 
-final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterface
+final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterface, AfterFunctionLikeAnalysisInterface
 {
     /** @var array<string, \Psalm\Type\Union> */
     private static $initializeContextVars;
+
+    public static function afterStatementAnalysis(
+        PhpParser\Node\FunctionLike $stmt,
+        FunctionLikeStorage $classlike_storage,
+        StatementsSource $statements_source,
+        Codebase $codebase,
+        array &$file_replacements = []
+    ) {
+        self::$initializeContextVars = [];
+    }
 
     /**
      * Called after an expression has been checked

@@ -1,24 +1,32 @@
 <?php
 
-static function () : void {
+namespace X {
 
-    $non_docblock = "a";
+    class Klass {
+        public function method() : void {
+            $x = 1;
+            $x = "a";
+        }
+    }
 
-    /** @var string $x */
-    $x = "a";
-    $x = 1;
+    function foo() : void {
+        /** @var string $x */
+        $x = 1;
+    }
+}
 
-    /** @var ?string $nullable_string */
-    $nullable_string = 3;
-};
+namespace {
+    static function () : void {
+        /** @var ?string $nullable_string */
+        $nullable_string = 3;
+
+        /** @var DateTimeImmutable $d */
+        $d = new \DateTimeImmutable('now');
+
+        /** @var DateTimeImmutable $date */
+        $date = new \DateTime('now');
+    };
+}
 
 
-/** @var float $y */
-$y = "a"; // error
-
-///** @var DateTimeImmutable $d */
-//$d = new \DateTimeImmutable('now');
-//
-///** @var DateTimeImmutable $date */
-//$date = new \DateTime('now'); // error
 
