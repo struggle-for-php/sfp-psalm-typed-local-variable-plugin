@@ -12,7 +12,7 @@ use Psalm\Config;
  * https://github.com/vimeo/psalm/blob/3.12.0/tests/TestConfig.php
  * @see https://github.com/vimeo/psalm/pull/3183
  */
-class TestConfig extends Config
+final class TestConfig extends Config
 {
     /** @var Config\ProjectFileFilter|null */
     private static $cached_project_files = null;
@@ -23,15 +23,15 @@ class TestConfig extends Config
     public function __construct()
     {
         parent::__construct();
+        $this->addPluginClass(\Sfp\Psalm\TypedLocalVariablePlugin\Plugin::class);
 
-        $this->throw_exception = true;
+        $this->throw_exception = false;
         $this->use_docblock_types = true;
         $this->level = 1;
         $this->cache_directory = null;
 
         $this->base_dir = getcwd() . DIRECTORY_SEPARATOR;
 
-        $this->addPluginClass(\Sfp\Psalm\TypedLocalVariablePlugin\Plugin::class);
 
         if (!self::$cached_project_files) {
             self::$cached_project_files = Config\ProjectFileFilter::loadFromXMLElement(

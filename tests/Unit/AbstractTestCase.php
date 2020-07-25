@@ -1,6 +1,7 @@
 <?php
 namespace SfpTest\Psalm\TypedLocalVariablePlugin\Unit;
 
+use Psalm\IssueBuffer;
 use function define;
 use function defined;
 use const DIRECTORY_SEPARATOR;
@@ -81,6 +82,8 @@ abstract class AbstractTestCase extends BaseTestCase
 
         $this->project_analyzer->setPhpVersion('7.3');
         $config->initializePlugins($this->project_analyzer);
+
+        IssueBuffer::clear();
     }
 
     public function tearDown() : void
@@ -110,17 +113,16 @@ abstract class AbstractTestCase extends BaseTestCase
     {
         $codebase = $this->project_analyzer->getCodebase();
         $codebase->addFilesToAnalyze([$file_path => $file_path]);
+        // $codebase->find_unused_code = 'always';
 
         $codebase->scanFiles();
-
-//        $codebase->config->visitStubFiles($codebase->);
 
         if ($codebase->alter_code) {
             $this->project_analyzer->interpretRefactors();
         }
 
-
         $this->project_analyzer->trackUnusedSuppressions();
+
 
         $file_analyzer = new FileAnalyzer(
             $this->project_analyzer,
