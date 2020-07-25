@@ -117,6 +117,8 @@ abstract class AbstractTestCase extends BaseTestCase
 
         $codebase->scanFiles();
 
+        $codebase->config->visitStubFiles($codebase);
+
         if ($codebase->alter_code) {
             $this->project_analyzer->interpretRefactors();
         }

@@ -39,12 +39,15 @@ CODE
 <?php
 function () : void {
     $x = "string";
-    $x = bool;
+    $x = "string2";    
+    $x = false;
 };
 CODE
         );
         $this->analyzeFile(__METHOD__,  new \Psalm\Context());
-//        $this->assertSame(1, IssueBuffer::getErrorCount());
+        $this->assertSame(1, IssueBuffer::getErrorCount());
+        $issue = current(IssueBuffer::getIssuesData())[0];
+        $this->assertSame('$x = false;', trim($issue->snippet));
+        $this->assertSame('UnmatchedTypeIssue', $issue->type);
     }
-
 }
