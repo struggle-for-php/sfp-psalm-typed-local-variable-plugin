@@ -4,20 +4,17 @@ declare(strict_types=1);
 namespace Sfp\Psalm\TypedLocalVariablePlugin;
 
 use PhpParser;
-use PhpParser\Node\Stmt;
 use Psalm\Codebase;
 use Psalm\CodeLocation;
 use Psalm\Context;
 use Psalm\FileManipulation;
-use Psalm\Internal\Analyzer\Statements\Expression\Fetch\ConstFetchAnalyzer;
 use Psalm\Internal\Analyzer\Statements\Expression\SimpleTypeInferer;
-use Psalm\Internal\Analyzer\StatementsAnalyzer;
 use Psalm\IssueBuffer;
 use Psalm\Plugin\Hook\AfterExpressionAnalysisInterface;
 use Psalm\Plugin\Hook\AfterFunctionLikeAnalysisInterface;
-use Psalm\Plugin\Hook\AfterStatementAnalysisInterface;
 use Psalm\StatementsSource;
 use Psalm\Storage\FunctionLikeStorage;
+use Psalm\Type\Union;
 
 final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterface, AfterFunctionLikeAnalysisInterface
 
@@ -54,7 +51,6 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
 
         if ($expr instanceof PhpParser\Node\Expr\Assign && $expr->var instanceof PhpParser\Node\Expr\Variable) {
 
-
             if (isset($context->vars_in_scope['$'.$expr->var->name])) {
                 // hold variable initialize type
                 if (! isset(self::$initializeContextVars[$expr->var->name])) {
@@ -79,15 +75,12 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
                     $originalTypes[] = (string)$atomicType;
                 }
 
-                if ($expr->expr instanceof PhpParser\Node\Expr\ConstFetch) {
-                    $assignType = SimpleTypeInferer::infer(
-                        $codebase,
-                        new \Psalm\Internal\Provider\NodeDataProvider(),
-                        $expr->expr,
-                        $statements_source->getAliases()
-                    );
-                } else {
-                    $assignType = $statements_source->getNodeTypeProvider()->getType($expr->expr);
+
+                $assignType = self::analyzeAssignmentType($expr, $codebase, $statements_source);
+
+                if (!$assignType) {
+                    // could not analyzed
+                    return null;
                 }
 
                 $type_matched = false;
@@ -131,5 +124,28 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
                 }
             }
         }
+    }
+
+    /**
+     * @psalm-return Union|false
+     */
+    private static function analyzeAssignmentType(PhpParser\Node\Expr\Assign $expr, Codebase $codebase, StatementsSource $statements_source)
+    {
+
+        if ($expr->expr instanceof \Psalm\Type\Union) {
+            return $statements_source->getNodeTypeProvider()->getType($expr->expr);
+        }
+
+        if ($expr->expr instanceof PhpParser\Node\Expr) {
+
+            return SimpleTypeInferer::infer(
+                $codebase,
+                new \Psalm\Internal\Provider\NodeDataProvider(),
+                $expr->expr,
+                $statements_source->getAliases()
+            );
+        }
+
+        return false;
     }
 }

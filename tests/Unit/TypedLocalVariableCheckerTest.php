@@ -48,4 +48,46 @@ CODE
         $this->assertSame('$x = false;', trim($issue->snippet));
         $this->assertSame('UnmatchedTypeIssue', $issue->type);
     }
+
+    /**
+     * @test
+     */
+    public function castAssignmentExpression() : void 
+    {
+        $this->addFile(
+            __METHOD__,
+            <<<'CODE'
+<?php
+function () : void {
+    $x = (bool) ( (bool) "string");
+    $x = 1;
+};
+CODE
+        );
+        $this->analyzeFile(__METHOD__,  new \Psalm\Context());
+        $this->assertSame(1, IssueBuffer::getErrorCount());
+        $issue = current(IssueBuffer::getIssuesData())[0];
+        $this->assertSame('$x = 1;', trim($issue->snippet));
+    }
+
+    /**
+     * @test
+     */
+    public function returnTypeShouldCheckAsAssignmentType() : void
+    {
+        $this->addFile(
+            __METHOD__,
+            <<<'CODE'
+<?php
+function () : void {
+    $x = time();
+    $x = "a";
+};
+CODE
+        );
+        $this->analyzeFile(__METHOD__,  new \Psalm\Context());
+        $this->assertSame(1, IssueBuffer::getErrorCount());
+        $issue = current(IssueBuffer::getIssuesData())[0];
+        $this->assertSame('$x = "a";', trim($issue->snippet));
+    }
 }
