@@ -2,11 +2,9 @@
 
 namespace SfpTest\Psalm\TypedLocalVariablePlugin\Unit;
 
-
-use Psalm\Exception\CodeException;
 use Psalm\IssueBuffer;
 
-class TypedLocalVariableCheckerTest extends AbstractTestCase
+final class TypedLocalVariableCheckerTest extends AbstractTestCase
 {
     /**
      * @test

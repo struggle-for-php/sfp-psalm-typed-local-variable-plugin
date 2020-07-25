@@ -49,6 +49,6 @@
     "analyze": "psalm",
     "cs-check": "phpcs",
     "cs-fix": "phpcbf",
-    "test": "codecept run -v"
+    "test": "phpunit"
   }
 }

@@ -23,7 +23,7 @@ final class TestConfig extends Config
     public function __construct()
     {
         parent::__construct();
-        $this->addPluginClass(\Sfp\Psalm\TypedLocalVariablePlugin\Plugin::class);
+        $this->addPluginClass(Plugin::class);
 
         $this->throw_exception = false;
         $this->use_docblock_types = true;
