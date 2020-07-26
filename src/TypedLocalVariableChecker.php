@@ -5,28 +5,20 @@ namespace Sfp\Psalm\TypedLocalVariablePlugin;
 
 use PhpParser;
 use Psalm\Codebase;
-use Psalm\CodeLocation;
 use Psalm\Context;
 use Psalm\FileManipulation;
-use Psalm\Internal\Analyzer\FunctionAnalyzer;
-use Psalm\Internal\Analyzer\Statements\Expression\SimpleTypeInferer;
-use Psalm\Internal\Analyzer\StatementsAnalyzer;
-use Psalm\Internal\Analyzer\TypeAnalyzer;
-use Psalm\Internal\Provider\NodeDataProvider;
-use Psalm\IssueBuffer;
 use Psalm\Plugin\Hook\AfterExpressionAnalysisInterface;
 use Psalm\Plugin\Hook\AfterFunctionLikeAnalysisInterface;
 use Psalm\StatementsSource;
 use Psalm\Storage\FunctionLikeStorage;
-use Psalm\Type\Union;
 
 final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterface, AfterFunctionLikeAnalysisInterface
 {
     /** @var array<string, \Psalm\Type\Union> */
     private static $initializeContextVars;
 
-    /** @var array<int, > */
-    private static $closureVars;
+    /** @var array<int, {}> */
+    private static $closureVars = [];
 
     public static function afterStatementAnalysis(
         PhpParser\Node\FunctionLike $stmt,
@@ -35,44 +27,50 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
         Codebase $codebase,
         array &$file_replacements = []
     ) {
-
         if ($function_like_storage->cased_name) {
             self::$initializeContextVars = [];
             return;
         }
 
+        $vars = self::filterCurrentFunctionStatementVar($stmt);
 
+        // debug
+//        foreach ($vars as $pos => $varSet) {
+//            echo $pos . ' ' . $varSet['expr']->var->name, PHP_EOL;
+//        }
 
+        $initVars = [];
+        foreach ($vars as $varSet) {
+            $name = $varSet['expr']->var->name;
+            if (!isset($initVars[$name])) {
+                $initVars[$name] = $varSet['initVar'];
+            }
 
-//        self::statementAnalyze($stmt, $codebase, $statements_source);
-        // todo $statements_source should be assign
+            AssignAnalyzer::analyzeAssign($varSet['expr'], $initVars[$name], $codebase, $statements_source);
+        }
 
-//        var_dump(__METHOD__ . $stmt->getStartFilePos() . " - " . $stmt->getEndFilePos());
     }
 
-//    private static function statementAnalyze(PhpParser\Node\FunctionLike $stmt, Codebase $codebase, StatementsSource $statements_source)
-//    {
-//        var_dump($stmt->getStartFilePos(), $stmt->getEndTokenPos());
-//
-//        /** @var PhpParser\Node\Expr\Variable[] $initializedVars */
-//        $initializedVars = [];
-//        foreach ($stmt->getStmts() as $stmt) {
-//            if ($stmt instanceof PhpParser\Node\Stmt\Expression && (($stmt->expr instanceof PhpParser\Node\Expr\Assign && $stmt->expr->var instanceof PhpParser\Node\Expr\Variable))) {
-////                if (! isset($initializedVars[$stmt->expr->var->name])) {
-////                    $initializedVars[$stmt->expr->var->name] = $stmt->expr->var;
-////                }
-//
-////                var_dump($initializedVars);
-////                $originalTypes = [];
-////                foreach ($initializedVars[$stmt->expr->var->name]->getAtomicTypes() as $atomicType) {
-////                    $originalTypes[] = (string)$atomicType;
-////                }
-//
-//                self::analyzeAssign($stmt->expr, $initializedVars[$stmt->expr->var->name], $codebase, $statements_source);
-//            }
-//        }
-//
-//    }
+    /**
+     * @return PhpParser\Node\Expr\Assign&PhpParser\Node\Expr\Variable[]
+     */
+    private static function filterCurrentFunctionStatementVar(PhpParser\Node\FunctionLike $stmt)
+    {
+//        var_dump(__METHOD__ . $stmt->getStartFilePos() . " - " . $stmt->getEndFilePos());
+
+        $currentVars = [];
+        foreach (self::$closureVars as $startFilePos => $varSet) {
+            if (($stmt->getStartFilePos() < $startFilePos) && ($startFilePos < $stmt->getEndFilePos())) {
+                $currentVars[$startFilePos] = $varSet;
+            }
+        }
+
+        foreach (array_keys($currentVars) as $currentVarStartFilePos) {
+            unset(self::$closureVars[$currentVarStartFilePos]);
+        }
+
+        return $currentVars;
+    }
 
 
     /**
@@ -100,8 +98,18 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
                 return null;
             }
 
-            if ($context->calling_method_id === null && $context->calling_function_id === null) {
-                self::$closureVars[$expr->getStartFilePos()] = $context->vars_in_scope['$'.$expr->var->name];
+            if ($context->calling_method_id === null || $context->calling_function_id === null) {
+                self::$closureVars[$expr->getStartFilePos()] = [
+                    // 'name' => $expr->var->name,
+                    'expr' => $expr,
+                    'initVar' => $context->vars_in_scope['$'.$expr->var->name],
+                    'context' => $context,
+                    'statements_source' => $statements_source
+                ];
+
+                // debug
+                // self::$closureVars[$expr->getStartFilePos()] = $expr->var->name;
+
                 return null;
             }
 
@@ -109,13 +117,13 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
             // hold variable initialize type
             if (! isset(self::$initializeContextVars[$expr->var->name])) {
 
-//                @todo method
-//                if ($context->calling_method_id) {
-//                    $method_id = new \Psalm\Internal\MethodIdentifier(...explode('::', $context->calling_method_id));
-//                    foreach ($codebase->methods->getStorage($method_id)->params as $param) {
-//                        self::$initializeContextVars[$param->name] = $param->type;
-//                    }
-//                }
+                //
+                if ($context->calling_method_id) {
+                    $method_id = new \Psalm\Internal\MethodIdentifier(...explode('::', $context->calling_method_id));
+                    foreach ($codebase->methods->getStorage($method_id)->params as $param) {
+                        self::$initializeContextVars[$param->name] = $param->type;
+                    }
+                }
 
 
                 if (! isset(self::$initializeContextVars[$expr->var->name])) {
@@ -126,62 +134,6 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
             AssignAnalyzer::analyzeAssign($expr, self::$initializeContextVars[$expr->var->name], $codebase, $statements_source);
 
             return null;
-//
-//
-//            $varInScope = self::$initializeContextVars[$expr->var->name];
-//
-//            $originalTypes = [];
-//            foreach ($varInScope->getAtomicTypes() as $atomicType) {
-//                $originalTypes[] = (string)$atomicType;
-//            }
-//
-//
-//            $assignType = self::analyzeAssignmentType($expr, $codebase, $statements_source);
-//
-//            if (!$assignType) {
-//                // could not analyzed
-//                return null;
-//            }
-//
-//            $type_matched = false;
-//            $atomicTypes = [];
-//            foreach ($assignType->getAtomicTypes() as $k => $atomicType) {
-//                if ($atomicType->isObjectType()) {
-//                    $class = (string) $atomicType;
-//                    foreach ($originalTypes as $originalType) {
-//                        if ($class === $originalType) {
-//                            $type_matched = true;
-//                            break;
-//                        }
-//
-//                        if ($codebase->interfaceExists($originalType)) {
-//                            $atomicTypes[] = $class;
-//                            if ((new \ReflectionClass($class))->isSubclassOf($originalType)) {
-//                                $type_matched = true;
-//                            }
-//                        }
-//                    }
-//                } else {
-//
-//                    $atomicTypes[] = (string) $atomicType;
-//                    if (in_array((string) $atomicType, $originalTypes, true)) {
-//                        $type_matched = true;
-//                    }
-//                }
-//
-//            }
-//
-//            if (!$type_matched) {
-//                if (IssueBuffer::accepts(
-//                    new UnmatchedTypeIssue(
-//                        sprintf('original types are %s, but assigned types are %s', implode('|', $originalTypes), implode('|', $atomicTypes)),
-//                        new CodeLocation($statements_source, $expr->expr)
-//                    ),
-//                    $statements_source->getSuppressedIssues()
-//                )) {
-//
-//                }
-//            }
         }
     }
 

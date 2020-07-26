@@ -20,32 +20,37 @@ final class TypedLocalVariableChecker_ScopeTest extends AbstractTestCase
 <?php
 class Klass {
     function func () : void {
-        $var = 'var';
         $closure = function () : string {
-            $d = 3;$d = 2;
+            $d = 3;
+            $x = new \DateTime('now');
             function () : void {
                 /** @var int $x */
                 $x = 1;
                 $y = 3;
                 function () : void {};
+                $x = 'foo';
                 $y = 4;
             };
             function () : void {
-                /** @var bool $x */
-                $l = true;
+                $x = true;
             };
-            $e = 3;
+            $x = 'bar';
             
             return 'string';
         };
-        $var = 3;
     }
 }
+function () : void {
+    $x = 'baz';
+};
 CODE
         );
         $this->analyzeFile(__METHOD__,  new \Psalm\Context());
-//        $this->assertSame(0, IssueBuffer::getErrorCount());
+        $this->assertSame(2, IssueBuffer::getErrorCount());
+        $issue = current(IssueBuffer::getIssuesData())[0];
+        $this->assertSame('$x = \'foo\';', trim($issue->snippet));
 
-        var_dump(IssueBuffer::getIssuesData());
+        $issue = current(IssueBuffer::getIssuesData())[1];
+        $this->assertSame('$x = \'bar\';', trim($issue->snippet));
     }
 }
