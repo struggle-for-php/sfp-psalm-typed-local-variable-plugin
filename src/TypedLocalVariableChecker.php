@@ -15,7 +15,7 @@ use Psalm\Storage\FunctionLikeStorage;
 final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterface, AfterFunctionLikeAnalysisInterface
 {
     /** @var array<int, {}> */
-    private static $closureVars = [];
+    private static $assignVarSet = [];
 
     public static function afterStatementAnalysis(
         PhpParser\Node\FunctionLike $stmt,
@@ -50,14 +50,14 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
     private static function filterCurrentFunctionStatementVar(PhpParser\Node\FunctionLike $stmt)
     {
         $currentVars = [];
-        foreach (self::$closureVars as $startFilePos => $varSet) {
+        foreach (self::$assignVarSet as $startFilePos => $varSet) {
             if (($stmt->getStartFilePos() < $startFilePos) && ($startFilePos < $stmt->getEndFilePos())) {
                 $currentVars[$startFilePos] = $varSet;
             }
         }
 
         foreach (array_keys($currentVars) as $currentVarStartFilePos) {
-            unset(self::$closureVars[$currentVarStartFilePos]);
+            unset(self::$assignVarSet[$currentVarStartFilePos]);
         }
 
         return $currentVars;
@@ -87,7 +87,7 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
                 return null;
             }
 
-            self::$closureVars[$expr->getStartFilePos()] = [
+            self::$assignVarSet[$expr->getStartFilePos()] = [
                 // 'name' => $expr->var->name,
                 'expr' => $expr,
                 'initVar' => $context->vars_in_scope['$'.$expr->var->name],
