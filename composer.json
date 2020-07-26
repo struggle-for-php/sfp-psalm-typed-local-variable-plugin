@@ -17,9 +17,7 @@
   },
   "require-dev": {
     "psr/log": "^1.1",
-    "squizlabs/php_codesniffer": "^3.3",
-    "codeception/base": "^3.1",
-    "weirdan/codeception-psalm-module": "^0.2.2"
+    "squizlabs/php_codesniffer": "^3.3"
   },
   "extra": {
     "psalm" : {
@@ -33,10 +31,7 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "SfpTest\\Psalm\\TypedLocalVariablePlugin\\": [
-        "tests/_support",
-        "tests/acceptance"
-      ]
+      "SfpTest\\Psalm\\TypedLocalVariablePlugin\\Unit\\": "tests/Unit"
     }
   },
   "scripts" : {
@@ -48,6 +43,6 @@
     "analyze": "psalm",
     "cs-check": "phpcs",
     "cs-fix": "phpcbf",
-    "test": "codecept run -v"
+    "test": "phpunit"
   }
 }

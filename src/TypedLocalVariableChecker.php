@@ -9,6 +9,9 @@ use Psalm\Codebase;
 use Psalm\CodeLocation;
 use Psalm\Context;
 use Psalm\FileManipulation;
+use Psalm\Internal\Analyzer\Statements\Expression\Fetch\ConstFetchAnalyzer;
+use Psalm\Internal\Analyzer\Statements\Expression\SimpleTypeInferer;
+use Psalm\Internal\Analyzer\StatementsAnalyzer;
 use Psalm\IssueBuffer;
 use Psalm\Plugin\Hook\AfterExpressionAnalysisInterface;
 use Psalm\Plugin\Hook\AfterFunctionLikeAnalysisInterface;
@@ -76,7 +79,16 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
                     $originalTypes[] = (string)$atomicType;
                 }
 
-                $assignType = $statements_source->getNodeTypeProvider()->getType($expr->expr);
+                if ($expr->expr instanceof PhpParser\Node\Expr\ConstFetch) {
+                    $assignType = SimpleTypeInferer::infer(
+                        $codebase,
+                        new \Psalm\Internal\Provider\NodeDataProvider(),
+                        $expr->expr,
+                        $statements_source->getAliases()
+                    );
+                } else {
+                    $assignType = $statements_source->getNodeTypeProvider()->getType($expr->expr);
+                }
 
                 $type_matched = false;
                 $atomicTypes = [];
@@ -89,7 +101,7 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
                                 break;
                             }
 
-                            if (class_exists($originalType)) {
+                            if ($codebase->interfaceExists($originalType)) {
                                 $atomicTypes[] = $class;
                                 if ((new \ReflectionClass($class))->isSubclassOf($originalType)) {
                                     $type_matched = true;
