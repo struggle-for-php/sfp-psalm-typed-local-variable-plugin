@@ -15,10 +15,10 @@ final class TypedLocalVariableCheckerTest extends AbstractTestCase
             __METHOD__,
             <<<'CODE'
 <?php
-function () : void {
+function func () : void {
     /** @var int|bool $x */
     $x = "string";
-};
+}
 CODE
         );
         $this->analyzeFile(__METHOD__,  new \Psalm\Context());
@@ -35,11 +35,11 @@ CODE
             __METHOD__,
             <<<'CODE'
 <?php
-function () : void {
+function func () : void {
     $x = "string";
     $x = "string2";    
     $x = false;
-};
+}
 CODE
         );
         $this->analyzeFile(__METHOD__,  new \Psalm\Context());
@@ -58,10 +58,10 @@ CODE
             __METHOD__,
             <<<'CODE'
 <?php
-function () : void {
+function func () : void {
     $x = (bool) ( (bool) "string");
     $x = 1;
-};
+}
 CODE
         );
         $this->analyzeFile(__METHOD__,  new \Psalm\Context());
@@ -79,10 +79,10 @@ CODE
             __METHOD__,
             <<<'CODE'
 <?php
-function () : void {
+function func () : void {
     $x = time();
     $x = "a";
-};
+}
 CODE
         );
         $this->analyzeFile(__METHOD__,  new \Psalm\Context());
