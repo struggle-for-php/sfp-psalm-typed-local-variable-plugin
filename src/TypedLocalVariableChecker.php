@@ -36,7 +36,7 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
         foreach ($vars as $varSet) {
             $name = $varSet['expr']->var->name;
             if (!isset($initVars[$name])) {
-                $initVars[$name] = $varSet['initVar'];
+                $initVars[$name] = $varSet['contextVar'];
             }
 
             AssignAnalyzer::analyzeAssign($varSet['expr'], $initVars[$name], $codebase, $statements_source);
@@ -90,7 +90,7 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
             self::$assignVarSet[$expr->getStartFilePos()] = [
                 // 'name' => $expr->var->name,
                 'expr' => $expr,
-                'initVar' => $context->vars_in_scope['$'.$expr->var->name],
+                'contextVar' => $context->vars_in_scope['$'.$expr->var->name], // assign timing context var.
                 'context' => $context,
                 'statements_source' => $statements_source
             ];
