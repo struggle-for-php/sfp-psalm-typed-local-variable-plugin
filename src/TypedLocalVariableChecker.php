@@ -25,16 +25,16 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
         array &$file_replacements = []
     ) {
 
-        $vars = self::filterCurrentFunctionStatementVar($stmt);
+        $assignVariables = self::filterCurrentFunctionStatementVar($stmt);
 
         $initVars = [];
-        foreach ($vars as $varSet) {
-            $name = $varSet['expr']->var->name;
+        foreach ($assignVariables as $assignVariable) {
+            $name = $assignVariable['expr']->var->name;
             if (!isset($initVars[$name])) {
-                $initVars[$name] = $varSet['context_var'];
+                $initVars[$name] = $assignVariable['context_var'];
             }
 
-            AssignAnalyzer::analyzeAssign($varSet['expr'], $initVars[$name], $codebase, $statements_source);
+            AssignAnalyzer::analyzeAssign($assignVariable['expr'], $initVars[$name], $codebase, $assignVariable['statements_source']);
         }
 
     }
