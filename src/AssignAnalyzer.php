@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 
 namespace Sfp\Psalm\TypedLocalVariablePlugin;
 
@@ -38,7 +38,7 @@ class AssignAnalyzer
                         break;
                     }
 
-                    if ($codebase->interfaceExists($originalType)) {
+                    if (class_exists($originalType)) {
                         $atomicTypes[] = $class;
                         if ((new \ReflectionClass($class))->isSubclassOf($originalType)) {
                             $type_matched = true;
@@ -90,25 +90,5 @@ class AssignAnalyzer
         }
 
         return false;
-    }
-
-    // @see CallAnalyzer, TypeAnalyzer
-    private static function typeComparison()
-    {
-//        $union_comparison_result = new \Psalm\Internal\Analyzer\TypeComparisonResult();
-//
-//        if (count($template_result->lower_bounds_unintersectable_types) > 1) {
-//            $upper_bound_type = $template_result->lower_bounds_unintersectable_types[0];
-//            $lower_bound_type = $template_result->lower_bounds_unintersectable_types[1];
-//        }
-//
-//        if (!TypeAnalyzer::isContainedBy(
-//            $statements_analyzer->getCodebase(),
-//            $upper_bound_type,
-//            $lower_bound_type,
-//            false,
-//            false,
-//            $union_comparison_result
-//        )) {
     }
 }

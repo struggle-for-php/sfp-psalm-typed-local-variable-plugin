@@ -12,9 +12,12 @@ use Psalm\Plugin\Hook\AfterFunctionLikeAnalysisInterface;
 use Psalm\StatementsSource;
 use Psalm\Storage\FunctionLikeStorage;
 
+/**
+ * @psalm-type AssignVar = array{expr: PhpParser\Node\Expr, context_var: \Psalm\Type\Union, statements_source: StatementsSource}
+ */
 final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterface, AfterFunctionLikeAnalysisInterface
 {
-    /** @var array<int, {}> */
+    /** @psalm-var array<int, AssignVar> */
     private static $assignVarSet = [];
 
     public static function afterStatementAnalysis(
@@ -36,7 +39,7 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
         foreach ($vars as $varSet) {
             $name = $varSet['expr']->var->name;
             if (!isset($initVars[$name])) {
-                $initVars[$name] = $varSet['contextVar'];
+                $initVars[$name] = $varSet['context_var'];
             }
 
             AssignAnalyzer::analyzeAssign($varSet['expr'], $initVars[$name], $codebase, $statements_source);
@@ -88,10 +91,8 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
             }
 
             self::$assignVarSet[$expr->getStartFilePos()] = [
-                // 'name' => $expr->var->name,
                 'expr' => $expr,
-                'contextVar' => $context->vars_in_scope['$'.$expr->var->name], // assign timing context var.
-                'context' => $context,
+                'context_var' => $context->vars_in_scope['$'.$expr->var->name], // assign timing context var.
                 'statements_source' => $statements_source
             ];
 
