@@ -12,7 +12,8 @@ This is VERY VERY VERY **Experimental** .
 
 ## Todo
  - [x] Support Closure scope isolated from function scope.
- - [ ] type comparison with psalm's TypeAnalyzer
+ - [ ] type comparison with psalm's TypeAnalyzer.
+ - [ ] function/method parameter treat as local variable
  - [ ] ... and more tests.
 
 ## demo

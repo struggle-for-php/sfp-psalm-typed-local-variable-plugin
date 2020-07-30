@@ -7,19 +7,25 @@ use PhpParser;
 use Psalm\Codebase;
 use Psalm\CodeLocation;
 use Psalm\Internal\Analyzer\Statements\Expression\SimpleTypeInferer;
+use Psalm\Internal\Analyzer\TypeAnalyzer;
+use Psalm\Issue\ArgumentTypeCoercion;
+use Psalm\Issue\InvalidArgument;
+use Psalm\Issue\InvalidScalarArgument;
+use Psalm\Issue\MixedArgumentTypeCoercion;
 use Psalm\IssueBuffer;
 use Psalm\StatementsSource;
+use Psalm\Type\Atomic\TFloat;
+use Psalm\Type\Atomic\TInt;
+use Psalm\Type\Atomic\TLiteralFloat;
+use Psalm\Type\Atomic\TLiteralInt;
+use Psalm\Type\Atomic\TLiteralString;
+use Psalm\Type\Atomic\TString;
 use Psalm\Type\Union;
 
 class AssignAnalyzer
 {
     public static function analyzeAssign(PhpParser\Node\Expr\Assign $expr, Union $firstDeclare, Codebase $codebase, StatementsSource $statements_source)
     {
-        $originalTypes = [];
-        foreach ($firstDeclare->getAtomicTypes() as $atomicType) {
-            $originalTypes[] = (string)$atomicType;
-        }
-
         $assignType = self::analyzeAssignmentType($expr, $codebase, $statements_source);
 
         if (!$assignType) {
@@ -27,45 +33,30 @@ class AssignAnalyzer
             return null;
         }
 
-        $type_matched = false;
-        $atomicTypes = [];
-        foreach ($assignType->getAtomicTypes() as $k => $atomicType) {
-            if ($atomicType->isObjectType()) {
-                $class = (string) $atomicType;
-                foreach ($originalTypes as $originalType) {
-                    if ($class === $originalType) {
-                        $type_matched = true;
-                        break;
-                    }
+        $lower_bound_type = $firstDeclare;
+        if (!$firstDeclare->from_docblock) {
+            $lower_bound_type = self::filterLiteral($firstDeclare);
+        }
 
-                    if (class_exists($originalType)) {
-                        $atomicTypes[] = $class;
-                        if ((new \ReflectionClass($class))->isSubclassOf($originalType)) {
-                            $type_matched = true;
-                        }
-                    }
-                }
+        self::typeComparison($assignType, $lower_bound_type, $statements_source, new CodeLocation($statements_source, $expr->expr), null);
+    }
+
+    private static function filterLiteral(Union $firstDeclare)
+    {
+        $types = [];
+        foreach ($firstDeclare->getAtomicTypes() as $atomicType) {
+            if ($atomicType instanceof TLiteralString) {
+                $types[] = new TString();
+            } elseif ($atomicType instanceof TLiteralInt) {
+                $types[] = new TInt();
+            } elseif ($atomicType instanceof TLiteralFloat) {
+                $types[] = new TFloat();
             } else {
-
-                $atomicTypes[] = (string) $atomicType;
-                if (in_array((string) $atomicType, $originalTypes, true)) {
-                    $type_matched = true;
-                }
-            }
-
-        }
-
-        if (!$type_matched) {
-            if (IssueBuffer::accepts(
-                new UnmatchedTypeIssue(
-                    sprintf('original types are %s, but assigned types are %s', implode('|', $originalTypes), implode('|', $atomicTypes)),
-                    new CodeLocation($statements_source, $expr->expr)
-                ),
-                $statements_source->getSuppressedIssues()
-            )) {
-
+                $types[] = $atomicType;
             }
         }
+
+        return new Union($types);
     }
 
 
@@ -74,13 +65,7 @@ class AssignAnalyzer
      */
     private static function analyzeAssignmentType(PhpParser\Node\Expr\Assign $expr, Codebase $codebase, StatementsSource $statements_source)
     {
-
-        if ($expr->expr instanceof \Psalm\Type\Union) {
-            return $statements_source->getNodeTypeProvider()->getType($expr->expr);
-        }
-
-        if ($expr->expr instanceof PhpParser\Node\Expr) {
-
+        if ($expr->expr instanceof PhpParser\Node\Expr\ConstFetch) {
             return SimpleTypeInferer::infer(
                 $codebase,
                 new \Psalm\Internal\Provider\NodeDataProvider(),
@@ -89,6 +74,80 @@ class AssignAnalyzer
             );
         }
 
+        if ($expr->expr instanceof PhpParser\Node\Expr ||
+                $expr->expr instanceof PhpParser\Node\Name) {
+            return $statements_source->getNodeTypeProvider()->getType($expr->expr);
+        }
+
+
         return false;
+    }
+
+    private static function typeComparison(Union $upper_bound_type, Union $lower_bound_type, StatementsSource $statements_analyzer, CodeLocation $code_location, ?string $function_id)
+    {
+        $union_comparison_result = new \Psalm\Internal\Analyzer\TypeComparisonResult();
+
+        if (!TypeAnalyzer::isContainedBy(
+            $statements_analyzer->getCodebase(),
+            $upper_bound_type,
+            $lower_bound_type,
+            false,
+            false,
+            $union_comparison_result
+        )) {
+            if ($union_comparison_result->type_coerced) {
+                if ($union_comparison_result->type_coerced_from_mixed) {
+                    if (IssueBuffer::accepts(
+                        new MixedArgumentTypeCoercion(
+                            'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
+                            . $lower_bound_type->getId(),
+                            $code_location,
+                            $function_id
+                        ),
+                        $statements_analyzer->getSuppressedIssues()
+                    )) {
+                        // continue
+                    }
+                } else {
+                    if (IssueBuffer::accepts(
+                        new ArgumentTypeCoercion(
+                            'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
+                            . $lower_bound_type->getId(),
+                            $code_location,
+                            $function_id
+                        ),
+                        $statements_analyzer->getSuppressedIssues()
+                    )) {
+                        // continue
+                    }
+                }
+            } elseif ($union_comparison_result->scalar_type_match_found) {
+                if (IssueBuffer::accepts(
+                    new InvalidScalarArgument(
+                        'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
+                        . $lower_bound_type->getId(),
+                        $code_location,
+                        $function_id
+                    ),
+                    $statements_analyzer->getSuppressedIssues()
+                )) {
+                    // continue
+                }
+            } else {
+                if (IssueBuffer::accepts(
+                    new InvalidArgument(
+                        'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
+                        . $lower_bound_type->getId(),
+                        $code_location,
+                        $function_id
+                    ),
+                    $statements_analyzer->getSuppressedIssues()
+                )) {
+                    // continue
+                }
+            }
+        }
+
+
     }
 }

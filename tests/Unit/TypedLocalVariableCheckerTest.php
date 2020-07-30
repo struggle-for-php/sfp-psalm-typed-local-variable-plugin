@@ -18,6 +18,9 @@ final class TypedLocalVariableCheckerTest extends AbstractTestCase
 function func () : void {
     /** @var int|bool $x */
     $x = "string";
+    /** @var mixed $mixed */
+    $mixed = "string";
+    $mixed = 0;
 }
 CODE
         );
@@ -36,17 +39,38 @@ CODE
             <<<'CODE'
 <?php
 function func () : void {
-    $x = "string";
+    $x = "s";
     $x = "string2";    
     $x = false;
 }
 CODE
         );
         $this->analyzeFile(__METHOD__,  new \Psalm\Context());
+
         $this->assertSame(1, IssueBuffer::getErrorCount());
         $issue = current(IssueBuffer::getIssuesData())[0];
         $this->assertSame('$x = false;', trim($issue->snippet));
-        $this->assertSame('UnmatchedTypeIssue', $issue->type);
+    }
+
+    /**
+     * @test
+     */
+    public function typeCheckObject()
+    {
+        $this->addFile(
+            __METHOD__,
+            <<<'CODE'
+<?php
+function func () : void {
+    $date = new \DateTimeImmutable('now');
+    $date = new \DateTime('now');
+}
+CODE
+        );
+        $this->analyzeFile(__METHOD__,  new \Psalm\Context());
+        $this->assertSame(1, IssueBuffer::getErrorCount());
+        $issue = current(IssueBuffer::getIssuesData())[0];
+        $this->assertSame('$date = new \DateTime(\'now\');', trim($issue->snippet));
     }
 
     /**

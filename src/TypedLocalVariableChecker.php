@@ -68,6 +68,16 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
     ) {
         if ($expr instanceof PhpParser\Node\Expr\Assign && $expr->var instanceof PhpParser\Node\Expr\Variable) {
 
+//            if ($context->calling_method_id) {
+//                $method_id = new \Psalm\Internal\MethodIdentifier(...explode('::', $context->calling_method_id));
+//                foreach ($codebase->methods->getStorage($method_id)->params as $param) {
+//                    $expr->setAttribute('__sfp_psalm_context', [
+//                        'context_var' => $param->type,
+//                        'statements_source' => $statements_source
+//                    ]);
+//                }
+//            }
+
             if (! isset($context->vars_in_scope['$'.$expr->var->name])) {
                 return null;
             }

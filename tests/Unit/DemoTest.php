@@ -16,6 +16,8 @@ final class DemoTest extends AbstractTestCase
         $this->analyzeFile(__METHOD__,  new \Psalm\Context());
         $this->assertSame(4, IssueBuffer::getErrorCount());
         // todo more assertions
+
+//        var_dump(IssueBuffer::getIssuesData());
     }
 
 }
