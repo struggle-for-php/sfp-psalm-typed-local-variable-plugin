@@ -17,9 +17,6 @@ use Psalm\Storage\FunctionLikeStorage;
  */
 final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterface, AfterFunctionLikeAnalysisInterface
 {
-    /** @psalm-var array<int, AssignVar> */
-    private static $assignVarSet = [];
-
     public static function afterStatementAnalysis(
         PhpParser\Node\FunctionLike $stmt,
         FunctionLikeStorage $function_like_storage,
@@ -29,11 +26,6 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
     ) {
 
         $vars = self::filterCurrentFunctionStatementVar($stmt);
-
-        // debug
-//        foreach ($vars as $pos => $varSet) {
-//            echo $pos . ' ' . $varSet['expr']->var->name, PHP_EOL;
-//        }
 
         $initVars = [];
         foreach ($vars as $varSet) {
@@ -53,14 +45,16 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
     private static function filterCurrentFunctionStatementVar(PhpParser\Node\FunctionLike $stmt)
     {
         $currentVars = [];
-        foreach (self::$assignVarSet as $startFilePos => $varSet) {
-            if (($stmt->getStartFilePos() < $startFilePos) && ($startFilePos < $stmt->getEndFilePos())) {
-                $currentVars[$startFilePos] = $varSet;
-            }
-        }
+        foreach ($stmt->getStmts() as $expr) {
+            if ($expr instanceof PhpParser\Node\Stmt\Expression &&
+                $expr->expr instanceof PhpParser\Node\Expr\Assign &&
+                $expr->expr->var instanceof PhpParser\Node\Expr\Variable) {
 
-        foreach (array_keys($currentVars) as $currentVarStartFilePos) {
-            unset(self::$assignVarSet[$currentVarStartFilePos]);
+                if (($stmt->getStartFilePos() < $expr->expr->getStartFilePos()) && ($expr->expr->getStartFilePos() < $stmt->getEndFilePos())) {
+                    $currentVars[$expr->expr->getStartFilePos()] = $expr->expr->getAttribute('__sfp_psalm_context');
+                }
+
+            }
         }
 
         return $currentVars;
@@ -90,11 +84,11 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
                 return null;
             }
 
-            self::$assignVarSet[$expr->getStartFilePos()] = [
+            $expr->setAttribute('__sfp_psalm_context',  [
                 'expr' => $expr,
                 'context_var' => $context->vars_in_scope['$'.$expr->var->name], // assign timing context var.
                 'statements_source' => $statements_source
-            ];
+            ]);
 
             return null;
         }
