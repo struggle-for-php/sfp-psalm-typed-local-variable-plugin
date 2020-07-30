@@ -12,9 +12,6 @@ use Psalm\Plugin\Hook\AfterFunctionLikeAnalysisInterface;
 use Psalm\StatementsSource;
 use Psalm\Storage\FunctionLikeStorage;
 
-/**
- * @psalm-type AssignVar = array{expr: PhpParser\Node\Expr, context_var: \Psalm\Type\Union, statements_source: StatementsSource}
- */
 final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterface, AfterFunctionLikeAnalysisInterface
 {
     public static function afterStatementAnalysis(
@@ -39,30 +36,21 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
 
     }
 
-    /**
-     * @return PhpParser\Node\Expr\Assign&PhpParser\Node\Expr\Variable[]
-     */
-    private static function filterCurrentFunctionStatementVar(PhpParser\Node\FunctionLike $stmt)
+    private static function filterCurrentFunctionStatementVar(PhpParser\Node\FunctionLike $stmt) : \Generator
     {
-        $currentVars = [];
         foreach ($stmt->getStmts() as $expr) {
             if ($expr instanceof PhpParser\Node\Stmt\Expression &&
                 $expr->expr instanceof PhpParser\Node\Expr\Assign &&
                 $expr->expr->var instanceof PhpParser\Node\Expr\Variable) {
 
                 if (($stmt->getStartFilePos() < $expr->expr->getStartFilePos()) && ($expr->expr->getStartFilePos() < $stmt->getEndFilePos())) {
-                    $currentVars[$expr->expr->getStartFilePos()] = ['expr' => $expr->expr] + $expr->expr->getAttribute('__sfp_psalm_context');
+                    yield $expr->expr->getStartFilePos() => ['expr' => $expr->expr] + $expr->expr->getAttribute('__sfp_psalm_context');
                 }
-
             }
         }
-
-        return $currentVars;
     }
 
-
     /**
-     *
      * Called after an expression has been checked
      *
      * @param  PhpParser\Node\Expr  $expr
@@ -92,5 +80,4 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
             return null;
         }
     }
-
 }

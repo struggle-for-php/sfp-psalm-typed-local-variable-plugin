@@ -11,9 +11,9 @@ This is VERY VERY VERY **Experimental** .
 * NOT support variables in namespace. 
 
 ## Todo
-* Support Closure scope isolated from function scope.
-* Support intersect type.
-* ... And more tests.
+ - [x] Support Closure scope isolated from function scope.
+ - [ ] type comparison with psalm's TypeAnalyzer
+ - [ ] ... and more tests.
 
 ## demo
 ```
