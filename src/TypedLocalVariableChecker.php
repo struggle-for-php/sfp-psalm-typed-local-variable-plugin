@@ -51,7 +51,7 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
                 $expr->expr->var instanceof PhpParser\Node\Expr\Variable) {
 
                 if (($stmt->getStartFilePos() < $expr->expr->getStartFilePos()) && ($expr->expr->getStartFilePos() < $stmt->getEndFilePos())) {
-                    $currentVars[$expr->expr->getStartFilePos()] = $expr->expr->getAttribute('__sfp_psalm_context');
+                    $currentVars[$expr->expr->getStartFilePos()] = ['expr' => $expr->expr] + $expr->expr->getAttribute('__sfp_psalm_context');
                 }
 
             }
@@ -85,7 +85,6 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
             }
 
             $expr->setAttribute('__sfp_psalm_context',  [
-                'expr' => $expr,
                 'context_var' => $context->vars_in_scope['$'.$expr->var->name], // assign timing context var.
                 'statements_source' => $statements_source
             ]);
