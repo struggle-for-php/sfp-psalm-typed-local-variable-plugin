@@ -25,6 +25,10 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
         $assignVariables = self::filterCurrentFunctionStatementVar($stmt);
 
         $initVars = [];
+        foreach ($function_like_storage->params as $param) {
+            $initVars[$param->name] = $param->type;
+        }
+
         foreach ($assignVariables as $assignVariable) {
             $name = $assignVariable['expr']->var->name;
             if (!isset($initVars[$name])) {
@@ -33,7 +37,6 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
 
             AssignAnalyzer::analyzeAssign($assignVariable['expr'], $initVars[$name], $codebase, $assignVariable['statements_source']);
         }
-
     }
 
     private static function filterCurrentFunctionStatementVar(PhpParser\Node\FunctionLike $stmt) : \Generator
@@ -67,17 +70,6 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
         array &$file_replacements = []
     ) {
         if ($expr instanceof PhpParser\Node\Expr\Assign && $expr->var instanceof PhpParser\Node\Expr\Variable) {
-
-//            if ($context->calling_method_id) {
-//                $method_id = new \Psalm\Internal\MethodIdentifier(...explode('::', $context->calling_method_id));
-//                foreach ($codebase->methods->getStorage($method_id)->params as $param) {
-//                    $expr->setAttribute('__sfp_psalm_context', [
-//                        'context_var' => $param->type,
-//                        'statements_source' => $statements_source
-//                    ]);
-//                }
-//            }
-
             if (! isset($context->vars_in_scope['$'.$expr->var->name])) {
                 return null;
             }

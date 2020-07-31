@@ -16,8 +16,17 @@ final class TypedLocalVariableCheckerTest extends AbstractTestCase
             <<<'CODE'
 <?php
 function func () : void {
-    /** @var int|bool $x */
-    $x = "string";
+    /** @var ?string $nullable */
+    $nullable = null;
+    $nullable = 'foo';
+    $nullable = false;
+    /** @var int|bool $union */
+    $union = 1;
+    $union = true;
+    $union = "string";
+    /** @var array{date: DateTimeInterface} $array_shape */
+    $array_shape = ['date' => new DateTime('now')];
+    $array_shape = ['date' => 'not DateTimeInterface obj'];
     /** @var mixed $mixed */
     $mixed = "string";
     $mixed = 0;
@@ -25,7 +34,9 @@ function func () : void {
 CODE
         );
         $this->analyzeFile(__METHOD__,  new \Psalm\Context());
-        $this->assertSame(1, IssueBuffer::getErrorCount());
+        $this->assertSame('$nullable = false;', trim(current(IssueBuffer::getIssuesData())[0]->snippet));
+        $this->assertSame('$union = "string";', trim(current(IssueBuffer::getIssuesData())[1]->snippet));
+        $this->assertSame('$array_shape = [\'date\' => \'not DateTimeInterface obj\'];', trim(current(IssueBuffer::getIssuesData())[2]->snippet));
     }
 
     /**
@@ -113,5 +124,31 @@ CODE
         $this->assertSame(1, IssueBuffer::getErrorCount());
         $issue = current(IssueBuffer::getIssuesData())[0];
         $this->assertSame('$x = "a";', trim($issue->snippet));
+    }
+
+    /**
+     * @test
+     */
+    public function paramsAsLocalVariable() : void
+    {
+        $this->addFile(
+            __METHOD__,
+            <<<'CODE'
+<?php
+/**
+ * @param int $param_typed_docblock
+ */
+function func (int $param, $param_typed_docblock) : void {
+    $param = "string";
+    $param_typed_docblock = true;
+}
+CODE
+        );
+        $this->analyzeFile(__METHOD__,  new \Psalm\Context());
+        $this->assertSame(2, IssueBuffer::getErrorCount());
+        $issue = current(IssueBuffer::getIssuesData())[0];
+        $this->assertSame('$param = "string";', trim($issue->snippet));
+        $issue = current(IssueBuffer::getIssuesData())[1];
+        $this->assertSame('$param_typed_docblock = true;', trim($issue->snippet));
     }
 }
