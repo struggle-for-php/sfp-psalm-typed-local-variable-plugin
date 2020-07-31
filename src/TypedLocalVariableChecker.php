@@ -16,7 +16,6 @@ use Psalm\Type\Union;
 
 final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterface, AfterFunctionLikeAnalysisInterface
 {
-    /** @var string */
     private const CONTEXT_ATTRIBUTE_KEY = '__sfp_psalm_context';
 
     public static function afterStatementAnalysis(
@@ -51,11 +50,10 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
         }
 
         foreach ($stmts as $expr) {
-            if (
-                ! ($expr instanceof PhpParser\Node\Stmt\Expression) ||
+            if (! ($expr instanceof PhpParser\Node\Stmt\Expression) ||
                 ! ($expr->expr instanceof PhpParser\Node\Expr\Assign) ||
                 ! ($expr->expr->var instanceof PhpParser\Node\Expr\Variable) ||
-                ! ($expr->expr->var->name instanceof PhpParser\Node\Expr)
+                $expr->expr->var->name instanceof PhpParser\Node\Expr
             ) {
                 continue;
             }

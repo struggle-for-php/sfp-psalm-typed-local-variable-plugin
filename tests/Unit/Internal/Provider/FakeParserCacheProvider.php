@@ -3,7 +3,6 @@
 
 namespace SfpTest\Psalm\TypedLocalVariablePlugin\Unit\Internal\Provider;
 
-
 /**
  * borrowed from psalm
  */

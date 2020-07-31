@@ -8,7 +8,6 @@ use PhpParser;
 use Psalm\Codebase;
 use Psalm\CodeLocation;
 use Psalm\Internal\Analyzer\Statements\Expression\SimpleTypeInferer;
-use Psalm\Internal\Analyzer\TypeAnalyzer;
 use Psalm\Internal\Provider\NodeDataProvider;
 use Psalm\Internal\Type\Comparator\TypeComparisonResult;
 use Psalm\Internal\Type\Comparator\UnionTypeComparator;
@@ -34,7 +33,7 @@ class AssignAnalyzer
 
         if (! $assignType) {
             // could not analyzed
-            return ;
+            return;
         }
 
         $lower_bound_type = $firstDeclare;
@@ -45,7 +44,7 @@ class AssignAnalyzer
         self::typeComparison($assignType, $lower_bound_type, $statements_source, new CodeLocation($statements_source, $expr->expr), null);
     }
 
-    private static function rollupLiteral(Union $firstDeclare) : Union
+    private static function rollupLiteral(Union $firstDeclare): Union
     {
         $types = [];
         foreach ($firstDeclare->getAtomicTypes() as $atomicType) {
@@ -81,74 +80,69 @@ class AssignAnalyzer
     {
         $union_comparison_result = new TypeComparisonResult();
 
-        if (
-            UnionTypeComparator::isContainedBy(
-                $statements_analyzer->getCodebase(),
-                $upper_bound_type,
-                $lower_bound_type,
-                false,
-                false,
-                $union_comparison_result
-            )
+        if (UnionTypeComparator::isContainedBy(
+            $statements_analyzer->getCodebase(),
+            $upper_bound_type,
+            $lower_bound_type,
+            false,
+            false,
+            $union_comparison_result
+        )
         ) {
             return;
         }
 
         if ($union_comparison_result->type_coerced) {
             if ($union_comparison_result->type_coerced_from_mixed) {
-                if (
-                    IssueBuffer::accepts(
-                        new MixedArgumentTypeCoercion(
-                            'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
+                if (IssueBuffer::accepts(
+                    new MixedArgumentTypeCoercion(
+                        'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
                             . $lower_bound_type->getId(),
-                            $code_location,
-                            $function_id
-                        ),
-                        $statements_analyzer->getSuppressedIssues()
-                    )
+                        $code_location,
+                        $function_id
+                    ),
+                    $statements_analyzer->getSuppressedIssues()
+                )
                 ) {
                     // continue
                 }
             } else {
-                if (
-                    IssueBuffer::accepts(
-                        new ArgumentTypeCoercion(
-                            'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
+                if (IssueBuffer::accepts(
+                    new ArgumentTypeCoercion(
+                        'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
                             . $lower_bound_type->getId(),
-                            $code_location,
-                            $function_id
-                        ),
-                        $statements_analyzer->getSuppressedIssues()
-                    )
+                        $code_location,
+                        $function_id
+                    ),
+                    $statements_analyzer->getSuppressedIssues()
+                )
                 ) {
                     // continue
                 }
             }
         } elseif ($union_comparison_result->scalar_type_match_found) {
-            if (
-                IssueBuffer::accepts(
-                    new InvalidScalarArgument(
-                        'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
+            if (IssueBuffer::accepts(
+                new InvalidScalarArgument(
+                    'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
                         . $lower_bound_type->getId(),
-                        $code_location,
-                        $function_id
-                    ),
-                    $statements_analyzer->getSuppressedIssues()
-                )
+                    $code_location,
+                    $function_id
+                ),
+                $statements_analyzer->getSuppressedIssues()
+            )
             ) {
                 // continue
             }
         } else {
-            if (
-                IssueBuffer::accepts(
-                    new InvalidArgument(
-                        'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
+            if (IssueBuffer::accepts(
+                new InvalidArgument(
+                    'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
                         . $lower_bound_type->getId(),
-                        $code_location,
-                        $function_id
-                    ),
-                    $statements_analyzer->getSuppressedIssues()
-                )
+                    $code_location,
+                    $function_id
+                ),
+                $statements_analyzer->getSuppressedIssues()
+            )
             ) {
                 // continue
             }

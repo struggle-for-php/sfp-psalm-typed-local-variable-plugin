@@ -14,7 +14,7 @@ final class DemoTest extends AbstractTestCase
     /**
      * @test
      */
-    public function assert_demo_script(): void
+    public function assertDemoScript(): void
     {
         $this->addFile(__METHOD__, file_get_contents(__DIR__ . '/../../demo/demo.php'));
 

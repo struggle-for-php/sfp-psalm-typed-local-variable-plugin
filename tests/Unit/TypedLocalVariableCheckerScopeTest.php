@@ -10,7 +10,7 @@ use Psalm\IssueBuffer;
 use function current;
 use function trim;
 
-final class TypedLocalVariableChecker_ScopeTest extends AbstractTestCase
+final class TypedLocalVariableCheckerScopeTest extends AbstractTestCase
 {
     /**
      * @test
