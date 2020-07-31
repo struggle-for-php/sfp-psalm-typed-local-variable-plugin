@@ -11,6 +11,7 @@ use Psalm\Internal\Analyzer\Statements\Expression\SimpleTypeInferer;
 use Psalm\Internal\Analyzer\TypeAnalyzer;
 use Psalm\Internal\Provider\NodeDataProvider;
 use Psalm\Internal\Type\Comparator\TypeComparisonResult;
+use Psalm\Internal\Type\Comparator\UnionTypeComparator;
 use Psalm\Issue\ArgumentTypeCoercion;
 use Psalm\Issue\InvalidArgument;
 use Psalm\Issue\InvalidScalarArgument;
@@ -27,24 +28,24 @@ use Psalm\Type\Union;
 
 class AssignAnalyzer
 {
-    public static function analyzeAssign(PhpParser\Node\Expr\Assign $expr, Union $firstDeclare, Codebase $codebase, StatementsSource $statements_source)
+    public static function analyzeAssign(PhpParser\Node\Expr\Assign $expr, Union $firstDeclare, Codebase $codebase, StatementsSource $statements_source): void
     {
         $assignType = self::analyzeAssignmentType($expr, $codebase, $statements_source);
 
         if (! $assignType) {
             // could not analyzed
-            return null;
+            return ;
         }
 
         $lower_bound_type = $firstDeclare;
         if (! $firstDeclare->from_docblock) {
-            $lower_bound_type = self::filterLiteral($firstDeclare);
+            $lower_bound_type = self::rollupLiteral($firstDeclare);
         }
 
         self::typeComparison($assignType, $lower_bound_type, $statements_source, new CodeLocation($statements_source, $expr->expr), null);
     }
 
-    private static function filterLiteral(Union $firstDeclare)
+    private static function rollupLiteral(Union $firstDeclare) : Union
     {
         $types = [];
         foreach ($firstDeclare->getAtomicTypes() as $atomicType) {
@@ -62,10 +63,7 @@ class AssignAnalyzer
         return new Union($types);
     }
 
-    /**
-     * @psalm-return Union|false
-     */
-    private static function analyzeAssignmentType(PhpParser\Node\Expr\Assign $expr, Codebase $codebase, StatementsSource $statements_source)
+    private static function analyzeAssignmentType(PhpParser\Node\Expr\Assign $expr, Codebase $codebase, StatementsSource $statements_source): ?Union
     {
         if ($expr->expr instanceof PhpParser\Node\Expr\ConstFetch) {
             return SimpleTypeInferer::infer(
@@ -76,14 +74,7 @@ class AssignAnalyzer
             );
         }
 
-        if (
-            $expr->expr instanceof PhpParser\Node\Expr ||
-                $expr->expr instanceof PhpParser\Node\Name
-        ) {
-            return $statements_source->getNodeTypeProvider()->getType($expr->expr);
-        }
-
-        return false;
+        return $statements_source->getNodeTypeProvider()->getType($expr->expr);
     }
 
     private static function typeComparison(Union $upper_bound_type, Union $lower_bound_type, StatementsSource $statements_analyzer, CodeLocation $code_location, ?string $function_id): void
@@ -91,7 +82,7 @@ class AssignAnalyzer
         $union_comparison_result = new TypeComparisonResult();
 
         if (
-            TypeAnalyzer::isContainedBy(
+            UnionTypeComparator::isContainedBy(
                 $statements_analyzer->getCodebase(),
                 $upper_bound_type,
                 $lower_bound_type,
