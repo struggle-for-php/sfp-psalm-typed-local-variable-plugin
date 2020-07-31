@@ -1,47 +1,47 @@
 <?php
+
+declare(strict_types=1);
+
 namespace SfpTest\Psalm\TypedLocalVariablePlugin\Unit;
 
-use Psalm\IssueBuffer;
-use function define;
-use function defined;
-use const DIRECTORY_SEPARATOR;
-use function getcwd;
-use function ini_set;
-use function method_exists;
 use PHPUnit\Framework\TestCase as BaseTestCase;
 use Psalm\Config;
+use Psalm\Context;
 use Psalm\Internal\Analyzer\FileAnalyzer;
 use Psalm\Internal\Analyzer\ProjectAnalyzer;
 use Psalm\Internal\Provider\Providers;
-use SfpTest\Psalm\TypedLocalVariablePlugin\Unit\Internal\Provider;
+use Psalm\IssueBuffer;
 use RuntimeException;
+use SfpTest\Psalm\TypedLocalVariablePlugin\Unit\Internal\Provider;
+
+use function define;
+use function defined;
+use function getcwd;
+use function ini_set;
+use function method_exists;
+
+use const DIRECTORY_SEPARATOR;
 
 /**
  * borrowed from psalm
  */
 abstract class AbstractTestCase extends BaseTestCase
 {
-    /** @var string */
-    protected static $src_dir_path;
+    protected static string $src_dir_path;
 
-    /** @var ProjectAnalyzer */
-    protected $project_analyzer;
+    protected ProjectAnalyzer $project_analyzer;
 
-    /** @var Provider\FakeFileProvider */
-    protected $file_provider;
+    protected Provider\FakeFileProvider $file_provider;
 
-    /**
-     * @return void
-     */
-    public static function setUpBeforeClass() : void
+    public static function setUpBeforeClass(): void
     {
         ini_set('memory_limit', '-1');
 
-        if (!defined('PSALM_VERSION')) {
+        if (! defined('PSALM_VERSION')) {
             define('PSALM_VERSION', '2.0.0');
         }
 
-        if (!defined('PHP_PARSER_VERSION')) {
+        if (! defined('PHP_PARSER_VERSION')) {
             define('PHP_PARSER_VERSION', '4.0.0');
         }
 
@@ -49,18 +49,12 @@ abstract class AbstractTestCase extends BaseTestCase
         self::$src_dir_path = getcwd() . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR;
     }
 
-    /**
-     * @return Config
-     */
-    protected function makeConfig() : Config
+    protected function makeConfig(): Config
     {
         return new TestConfig();
     }
 
-    /**
-     * @return void
-     */
-    public function setUp() : void
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -86,30 +80,18 @@ abstract class AbstractTestCase extends BaseTestCase
         IssueBuffer::clear();
     }
 
-    public function tearDown() : void
+    public function tearDown(): void
     {
         FileAnalyzer::clearCache();
     }
 
-    /**
-     * @param string $file_path
-     * @param string $contents
-     *
-     * @return void
-     */
-    public function addFile($file_path, $contents)
+    public function addFile(string $file_path, string $contents): void
     {
         $this->file_provider->registerFile($file_path, $contents);
         $this->project_analyzer->getCodebase()->scanner->addFileToShallowScan($file_path);
     }
 
-    /**
-     * @param  string         $file_path
-     * @param  \Psalm\Context $context
-     *
-     * @return void
-     */
-    public function analyzeFile($file_path, \Psalm\Context $context, bool $track_unused_suppressions = true)
+    public function analyzeFile(string $file_path, Context $context, bool $track_unused_suppressions = true): void
     {
         $codebase = $this->project_analyzer->getCodebase();
         $codebase->addFilesToAnalyze([$file_path => $file_path]);
@@ -137,23 +119,20 @@ abstract class AbstractTestCase extends BaseTestCase
             $codebase->taint->connectSinksAndSources();
         }
 
-        if ($track_unused_suppressions) {
-            \Psalm\IssueBuffer::processUnusedSuppressions($codebase->file_provider);
+        if (! $track_unused_suppressions) {
+            return;
         }
+
+        IssueBuffer::processUnusedSuppressions($codebase->file_provider);
     }
 
-    /**
-     * @param  bool $withDataSet
-     *
-     * @return string
-     */
-    protected function getTestName($withDataSet = true)
+    protected function getTestName(bool $withDataSet = true): string
     {
         $name = parent::getName($withDataSet);
         /**
          * @psalm-suppress TypeDoesNotContainNull PHPUnit 8.2 made it non-nullable again
          */
-        if (null === $name) {
+        if ($name === null) {
             throw new RuntimeException('anonymous test - shouldn\'t happen');
         }
 

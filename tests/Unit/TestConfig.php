@@ -1,21 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SfpTest\Psalm\TypedLocalVariablePlugin\Unit;
 
-use Sfp\Psalm\TypedLocalVariablePlugin\Plugin;
-use const DIRECTORY_SEPARATOR;
-use function getcwd;
 use Psalm\Config;
+use Sfp\Psalm\TypedLocalVariablePlugin\Plugin;
+use SimpleXMLElement;
+
+use function getcwd;
+
+use const DIRECTORY_SEPARATOR;
 
 /**
  * borrowed from psalm 3.12.0 (not HEAD)
  * https://github.com/vimeo/psalm/blob/3.12.0/tests/TestConfig.php
+ *
  * @see https://github.com/vimeo/psalm/pull/3183
  */
 final class TestConfig extends Config
 {
-    /** @var Config\ProjectFileFilter|null */
-    private static $cached_project_files = null;
+    private static ?Config\ProjectFileFilter $cached_project_files = null;
 
     /**
      * @psalm-suppress PossiblyNullPropertyAssignmentValue because cache_directory isn't strictly nullable
@@ -25,17 +30,17 @@ final class TestConfig extends Config
         parent::__construct();
         $this->addPluginClass(Plugin::class);
 
-        $this->throw_exception = false;
+        $this->throw_exception    = false;
         $this->use_docblock_types = true;
-        $this->level = 1;
-        $this->cache_directory = null;
+        $this->level              = 1;
+        $this->cache_directory    = null;
 
         $this->base_dir = getcwd() . DIRECTORY_SEPARATOR;
 
 
-        if (!self::$cached_project_files) {
+        if (! self::$cached_project_files) {
             self::$cached_project_files = Config\ProjectFileFilter::loadFromXMLElement(
-                new \SimpleXMLElement($this->getContents()),
+                new SimpleXMLElement($this->getContents()),
                 $this->base_dir,
                 true
             );
@@ -45,10 +50,9 @@ final class TestConfig extends Config
 
         $this->collectPredefinedConstants();
         $this->collectPredefinedFunctions();
-
     }
 
-    protected function getContents() : string
+    protected function getContents(): string
     {
         return <<<'EOF'
 <?xml version="1.0"?>

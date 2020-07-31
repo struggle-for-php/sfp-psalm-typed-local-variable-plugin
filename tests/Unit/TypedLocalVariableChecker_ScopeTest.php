@@ -1,16 +1,21 @@
 <?php
+
+declare(strict_types=1);
+
 namespace SfpTest\Psalm\TypedLocalVariablePlugin\Unit;
 
-
+use Psalm\Context;
 use Psalm\IssueBuffer;
+
+use function current;
+use function trim;
 
 final class TypedLocalVariableChecker_ScopeTest extends AbstractTestCase
 {
-
     /**
      * @test
      */
-    public function closureVariablesAreSeparatedScope() : void
+    public function closureVariablesAreSeparatedScope(): void
     {
         $this->addFile(
             __METHOD__,
@@ -43,7 +48,7 @@ function () : void {
 };
 CODE
         );
-        $this->analyzeFile(__METHOD__,  new \Psalm\Context());
+        $this->analyzeFile(__METHOD__, new Context());
         $this->assertSame(2, IssueBuffer::getErrorCount());
         $issue = current(IssueBuffer::getIssuesData())[0];
         $this->assertSame('$x = \'foo\';', trim($issue->snippet));
@@ -55,7 +60,7 @@ CODE
     /**
      * @test
      */
-    public function classMethodVariablesAreSeparatedScope() : void
+    public function classMethodVariablesAreSeparatedScope(): void
     {
         $this->addFile(
             __METHOD__,
@@ -83,7 +88,7 @@ class B {
 CODE
         );
 
-        $this->analyzeFile(__METHOD__,  new \Psalm\Context());
+        $this->analyzeFile(__METHOD__, new Context());
 
         $this->assertSame(2, IssueBuffer::getErrorCount());
         $issue = current(IssueBuffer::getIssuesData())[0];
@@ -95,21 +100,21 @@ CODE
     /**
      * @test
      */
-    public function anonymousClassMethodVariablesAreSeparatedScope() : void
+    public function anonymousClassMethodVariablesAreSeparatedScope(): void
     {
         $this->addFile(
             __METHOD__,
             <<<'CODE'
 <?php
-function func () {
+function func (): void {
     new class {
-        public function func() : void {
+        public function func(): void {
             /** @var int $x */
             $x = true;
         }
     };
     new class {
-        public function func() : void {
+        public function func(): void {
             /** @var bool $x */
             $x = null;
         }
@@ -118,7 +123,7 @@ function func () {
 CODE
         );
 
-        $this->analyzeFile(__METHOD__,  new \Psalm\Context());
+        $this->analyzeFile(__METHOD__, new Context());
         $this->assertSame(2, IssueBuffer::getErrorCount());
         $issue = current(IssueBuffer::getIssuesData())[0];
         $this->assertSame('$x = true;', trim($issue->snippet));

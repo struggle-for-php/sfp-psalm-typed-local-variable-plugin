@@ -1,11 +1,12 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Sfp\Psalm\TypedLocalVariablePlugin;
 
-use SimpleXMLElement;
 use Psalm\Plugin\PluginEntryPointInterface;
 use Psalm\Plugin\RegistrationInterface;
+use SimpleXMLElement;
 
 class Plugin implements PluginEntryPointInterface
 {

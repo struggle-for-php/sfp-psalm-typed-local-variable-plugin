@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Sfp\Psalm\TypedLocalVariablePlugin;
@@ -8,6 +9,8 @@ use Psalm\Codebase;
 use Psalm\CodeLocation;
 use Psalm\Internal\Analyzer\Statements\Expression\SimpleTypeInferer;
 use Psalm\Internal\Analyzer\TypeAnalyzer;
+use Psalm\Internal\Provider\NodeDataProvider;
+use Psalm\Internal\Type\Comparator\TypeComparisonResult;
 use Psalm\Issue\ArgumentTypeCoercion;
 use Psalm\Issue\InvalidArgument;
 use Psalm\Issue\InvalidScalarArgument;
@@ -28,13 +31,13 @@ class AssignAnalyzer
     {
         $assignType = self::analyzeAssignmentType($expr, $codebase, $statements_source);
 
-        if (!$assignType) {
+        if (! $assignType) {
             // could not analyzed
             return null;
         }
 
         $lower_bound_type = $firstDeclare;
-        if (!$firstDeclare->from_docblock) {
+        if (! $firstDeclare->from_docblock) {
             $lower_bound_type = self::filterLiteral($firstDeclare);
         }
 
@@ -59,7 +62,6 @@ class AssignAnalyzer
         return new Union($types);
     }
 
-
     /**
      * @psalm-return Union|false
      */
@@ -68,36 +70,43 @@ class AssignAnalyzer
         if ($expr->expr instanceof PhpParser\Node\Expr\ConstFetch) {
             return SimpleTypeInferer::infer(
                 $codebase,
-                new \Psalm\Internal\Provider\NodeDataProvider(),
+                new NodeDataProvider(),
                 $expr->expr,
                 $statements_source->getAliases()
             );
         }
 
-        if ($expr->expr instanceof PhpParser\Node\Expr ||
-                $expr->expr instanceof PhpParser\Node\Name) {
+        if (
+            $expr->expr instanceof PhpParser\Node\Expr ||
+                $expr->expr instanceof PhpParser\Node\Name
+        ) {
             return $statements_source->getNodeTypeProvider()->getType($expr->expr);
         }
-
 
         return false;
     }
 
-    private static function typeComparison(Union $upper_bound_type, Union $lower_bound_type, StatementsSource $statements_analyzer, CodeLocation $code_location, ?string $function_id)
+    private static function typeComparison(Union $upper_bound_type, Union $lower_bound_type, StatementsSource $statements_analyzer, CodeLocation $code_location, ?string $function_id): void
     {
-        $union_comparison_result = new \Psalm\Internal\Analyzer\TypeComparisonResult();
+        $union_comparison_result = new TypeComparisonResult();
 
-        if (!TypeAnalyzer::isContainedBy(
-            $statements_analyzer->getCodebase(),
-            $upper_bound_type,
-            $lower_bound_type,
-            false,
-            false,
-            $union_comparison_result
-        )) {
-            if ($union_comparison_result->type_coerced) {
-                if ($union_comparison_result->type_coerced_from_mixed) {
-                    if (IssueBuffer::accepts(
+        if (
+            TypeAnalyzer::isContainedBy(
+                $statements_analyzer->getCodebase(),
+                $upper_bound_type,
+                $lower_bound_type,
+                false,
+                false,
+                $union_comparison_result
+            )
+        ) {
+            return;
+        }
+
+        if ($union_comparison_result->type_coerced) {
+            if ($union_comparison_result->type_coerced_from_mixed) {
+                if (
+                    IssueBuffer::accepts(
                         new MixedArgumentTypeCoercion(
                             'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
                             . $lower_bound_type->getId(),
@@ -105,11 +114,13 @@ class AssignAnalyzer
                             $function_id
                         ),
                         $statements_analyzer->getSuppressedIssues()
-                    )) {
-                        // continue
-                    }
-                } else {
-                    if (IssueBuffer::accepts(
+                    )
+                ) {
+                    // continue
+                }
+            } else {
+                if (
+                    IssueBuffer::accepts(
                         new ArgumentTypeCoercion(
                             'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
                             . $lower_bound_type->getId(),
@@ -117,12 +128,14 @@ class AssignAnalyzer
                             $function_id
                         ),
                         $statements_analyzer->getSuppressedIssues()
-                    )) {
-                        // continue
-                    }
+                    )
+                ) {
+                    // continue
                 }
-            } elseif ($union_comparison_result->scalar_type_match_found) {
-                if (IssueBuffer::accepts(
+            }
+        } elseif ($union_comparison_result->scalar_type_match_found) {
+            if (
+                IssueBuffer::accepts(
                     new InvalidScalarArgument(
                         'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
                         . $lower_bound_type->getId(),
@@ -130,11 +143,13 @@ class AssignAnalyzer
                         $function_id
                     ),
                     $statements_analyzer->getSuppressedIssues()
-                )) {
-                    // continue
-                }
-            } else {
-                if (IssueBuffer::accepts(
+                )
+            ) {
+                // continue
+            }
+        } else {
+            if (
+                IssueBuffer::accepts(
                     new InvalidArgument(
                         'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
                         . $lower_bound_type->getId(),
@@ -142,12 +157,10 @@ class AssignAnalyzer
                         $function_id
                     ),
                     $statements_analyzer->getSuppressedIssues()
-                )) {
-                    // continue
-                }
+                )
+            ) {
+                // continue
             }
         }
-
-
     }
 }

@@ -1,15 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SfpTest\Psalm\TypedLocalVariablePlugin\Unit;
 
+use Psalm\Context;
 use Psalm\IssueBuffer;
+
+use function current;
+use function trim;
 
 final class TypedLocalVariableCheckerTest extends AbstractTestCase
 {
     /**
      * @test
      */
-    public function definedVariableByDocCommentShouldCheckedWhenAssigned() : void
+    public function definedVariableByDocCommentShouldCheckedWhenAssigned(): void
     {
         $this->addFile(
             __METHOD__,
@@ -33,7 +39,7 @@ function func () : void {
 }
 CODE
         );
-        $this->analyzeFile(__METHOD__,  new \Psalm\Context());
+        $this->analyzeFile(__METHOD__, new Context());
         $this->assertSame('$nullable = false;', trim(current(IssueBuffer::getIssuesData())[0]->snippet));
         $this->assertSame('$union = "string";', trim(current(IssueBuffer::getIssuesData())[1]->snippet));
         $this->assertSame('$array_shape = [\'date\' => \'not DateTimeInterface obj\'];', trim(current(IssueBuffer::getIssuesData())[2]->snippet));
@@ -42,9 +48,8 @@ CODE
     /**
      * @test
      */
-    public function assignedVariableShouldCheckTypeUnmatchedWhenReAssigned() : void
+    public function assignedVariableShouldCheckTypeUnmatchedWhenReAssigned(): void
     {
-
         $this->addFile(
             __METHOD__,
             <<<'CODE'
@@ -56,7 +61,7 @@ function func () : void {
 }
 CODE
         );
-        $this->analyzeFile(__METHOD__,  new \Psalm\Context());
+        $this->analyzeFile(__METHOD__, new Context());
 
         $this->assertSame(1, IssueBuffer::getErrorCount());
         $issue = current(IssueBuffer::getIssuesData())[0];
@@ -66,7 +71,7 @@ CODE
     /**
      * @test
      */
-    public function typeCheckObject()
+    public function typeCheckObject(): void
     {
         $this->addFile(
             __METHOD__,
@@ -78,7 +83,7 @@ function func () : void {
 }
 CODE
         );
-        $this->analyzeFile(__METHOD__,  new \Psalm\Context());
+        $this->analyzeFile(__METHOD__, new Context());
         $this->assertSame(1, IssueBuffer::getErrorCount());
         $issue = current(IssueBuffer::getIssuesData())[0];
         $this->assertSame('$date = new \DateTime(\'now\');', trim($issue->snippet));
@@ -87,7 +92,7 @@ CODE
     /**
      * @test
      */
-    public function castAssignmentExpression() : void 
+    public function castAssignmentExpression(): void
     {
         $this->addFile(
             __METHOD__,
@@ -99,7 +104,7 @@ function func () : void {
 }
 CODE
         );
-        $this->analyzeFile(__METHOD__,  new \Psalm\Context());
+        $this->analyzeFile(__METHOD__, new Context());
         $this->assertSame(1, IssueBuffer::getErrorCount());
         $issue = current(IssueBuffer::getIssuesData())[0];
         $this->assertSame('$x = 1;', trim($issue->snippet));
@@ -108,7 +113,7 @@ CODE
     /**
      * @test
      */
-    public function returnTypeShouldCheckAsAssignmentType() : void
+    public function returnTypeShouldCheckAsAssignmentType(): void
     {
         $this->addFile(
             __METHOD__,
@@ -120,7 +125,7 @@ function func () : void {
 }
 CODE
         );
-        $this->analyzeFile(__METHOD__,  new \Psalm\Context());
+        $this->analyzeFile(__METHOD__, new Context());
         $this->assertSame(1, IssueBuffer::getErrorCount());
         $issue = current(IssueBuffer::getIssuesData())[0];
         $this->assertSame('$x = "a";', trim($issue->snippet));
@@ -129,7 +134,7 @@ CODE
     /**
      * @test
      */
-    public function paramsAsLocalVariable() : void
+    public function paramsAsLocalVariable(): void
     {
         $this->addFile(
             __METHOD__,
@@ -144,7 +149,7 @@ function func (int $param, $param_typed_docblock) : void {
 }
 CODE
         );
-        $this->analyzeFile(__METHOD__,  new \Psalm\Context());
+        $this->analyzeFile(__METHOD__, new Context());
         $this->assertSame(2, IssueBuffer::getErrorCount());
         $issue = current(IssueBuffer::getIssuesData())[0];
         $this->assertSame('$param = "string";', trim($issue->snippet));
