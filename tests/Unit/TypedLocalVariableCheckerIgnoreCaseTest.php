@@ -28,4 +28,29 @@ CODE
         $this->analyzeFile(__METHOD__, new Context());
         $this->assertSame(0, IssueBuffer::getErrorCount());
     }
+
+    /**
+     * @test
+     */
+    public function globalVariables() : void
+    {
+        $this->addFile(__METHOD__, <<<'CODE'
+<?php
+namespace X {
+    /** @var bool $var */
+    $var = 1;
+}
+namespace {
+    /** @var bool $var */
+    $var = 1;
+    function () : void {
+        global $var;
+        $var = 2;
+    };
+}
+CODE
+        );
+        $this->analyzeFile(__METHOD__, new Context());
+        $this->assertSame(0, IssueBuffer::getErrorCount());
+    }
 }
