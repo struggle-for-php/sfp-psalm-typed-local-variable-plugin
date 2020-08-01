@@ -14,7 +14,21 @@ This is VERY VERY **Experimental** .
 
 * NOT support global variables.
 * NOT support variables in namespace.
-* NOT support [Variable variables](https://php.net/language.variables.variable) 
+* NOT support [Variable variables](https://php.net/language.variables.variable)
+* Non-each inline VariableReference.
+  * eg.
+```php
+/** @var string $var1 */
+/** @var bool $var2 */
+$var1 = 'string'; // cannot determine type for $var1
+
+// should fix like below
+/** @var string $var1 */
+$var1 = 'string';
+/** @var bool $var2 */
+$var2 = true;
+```
+
 
 ## Installation
 ```
@@ -26,13 +40,7 @@ $ vendor/bin/psalm-plugin enable struggle-for-php/sfp-psalm-typed-local-variable
  - [ ] optional setting for only from_docblock typed.
  - [ ] support Variable variables. 
 
-## 
-```
-$ composer require --dev struggle-for-php/sfp-psalm-typed-local-variable-plugin
-$ vendor/bin/psalm-plugin enable struggle-for-php/sfp-psalm-typed-local-variable-plugin
-```
-
-## demo
+## Demo
 
 ```php
 <?php
