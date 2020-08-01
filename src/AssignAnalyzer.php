@@ -11,10 +11,6 @@ use Psalm\Internal\Analyzer\Statements\Expression\SimpleTypeInferer;
 use Psalm\Internal\Provider\NodeDataProvider;
 use Psalm\Internal\Type\Comparator\TypeComparisonResult;
 use Psalm\Internal\Type\Comparator\UnionTypeComparator;
-use Psalm\Issue\ArgumentTypeCoercion;
-use Psalm\Issue\InvalidArgument;
-use Psalm\Issue\InvalidScalarArgument;
-use Psalm\Issue\MixedArgumentTypeCoercion;
 use Psalm\IssueBuffer;
 use Psalm\StatementsSource;
 use Psalm\Type\Atomic\TFloat;
@@ -26,6 +22,8 @@ use Psalm\Type\Atomic\TString;
 use Psalm\Type\Union;
 use Sfp\Psalm\TypedLocalVariablePlugin\Issue\InvalidScalarTypedLocalVariableIssue;
 use Sfp\Psalm\TypedLocalVariablePlugin\Issue\InvalidTypedLocalVariableIssue;
+use Sfp\Psalm\TypedLocalVariablePlugin\Issue\MixedTypeCoercionTypedLocalVariableIssue;
+use Sfp\Psalm\TypedLocalVariablePlugin\Issue\TypeCoercionTypedLocalVariableIssue;
 
 class AssignAnalyzer
 {
@@ -97,7 +95,7 @@ class AssignAnalyzer
         if ($union_comparison_result->type_coerced) {
             if ($union_comparison_result->type_coerced_from_mixed) {
                 if (IssueBuffer::accepts(
-                    new MixedArgumentTypeCoercion(
+                    new MixedTypeCoercionTypedLocalVariableIssue(
                         'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
                             . $lower_bound_type->getId(),
                         $code_location,
@@ -110,7 +108,7 @@ class AssignAnalyzer
                 }
             } else {
                 if (IssueBuffer::accepts(
-                    new ArgumentTypeCoercion(
+                    new TypeCoercionTypedLocalVariableIssue(
                         'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
                             . $lower_bound_type->getId(),
                         $code_location,

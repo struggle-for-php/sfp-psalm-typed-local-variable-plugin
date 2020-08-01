@@ -164,4 +164,47 @@ CODE
         $issue = current(IssueBuffer::getIssuesData())[1];
         $this->assertSame('$param_typed_docblock = true;', trim($issue->snippet));
     }
+
+    /**
+     * @test
+     */
+    public function mixedTypeCoercion(): void
+    {
+        $this->addFile(
+            __METHOD__,
+            <<<'CODE'
+<?php
+function foo(array $a) : void {
+    /** @var string[] $x */
+    $x = $a;
+}
+CODE
+        );
+        $this->analyzeFile(__METHOD__, new Context());
+        $issue = current(IssueBuffer::getIssuesData())[0];
+        $this->assertSame('MixedTypeCoercionTypedLocalVariableIssue', $issue->type);
+    }
+
+    /**
+     * @test
+     */
+    public function typeCoercion(): void
+    {
+        $this->addFile(
+            __METHOD__,
+            <<<'CODE'
+<?php
+class A {}
+class B extends A {}
+
+function takesA(A $a) : void {
+    /** @var B $b */
+    $b = $a;
+}
+CODE
+        );
+        $this->analyzeFile(__METHOD__, new Context());
+        $issue = current(IssueBuffer::getIssuesData())[0];
+        $this->assertSame('TypeCoercionTypedLocalVariableIssue', $issue->type);
+    }
 }
