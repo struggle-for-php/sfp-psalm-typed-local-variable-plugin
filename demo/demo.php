@@ -1,32 +1,35 @@
 <?php
-
 namespace X {
+
+    interface Mock{}
+
+    /** @return \DateTimeInterface&Mock */
+    function date_mock() {
+        return new class('now') extends \DateTime implements Mock{};
+    };
 
     class Klass {
         public function method() : void {
-            $x = 1;
-            $x = "a";
+            /** @var string|null $nullable_string */
+            $nullable_string = null;
+            $nullable_string = "a";
+            $nullable_string = true; // error
+
+            $bool = true; //direct typed without doc-block
+            $bool = 1; //error
+
+            /** @var \DateTimeInterface&Mock $intersection_type */
+            $intersection_type = new \DateTime('now'); // error
+            $intersection_type = date_mock();
+
+            (static function(): void {
+                /** @var \DateTimeImmutable $date  */
+                $date = new \DateTimeImmutable('now');
+
+                if (rand() % 2 === 0) {
+                    $date = new \DateTime('tomorrow'); // error
+                }
+            })();
         }
     }
-
-    function foo() : void {
-        /** @var string $x */
-        $x = 1;
-    }
 }
-
-namespace {
-    static function () : void {
-        /** @var ?string $nullable_string */
-        $nullable_string = 3;
-
-        /** @var DateTimeImmutable $d */
-        $d = new \DateTimeImmutable('now');
-
-        /** @var DateTimeImmutable $date */
-        $date = new \DateTime('now');
-    };
-}
-
-
-

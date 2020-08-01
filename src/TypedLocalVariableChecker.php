@@ -25,7 +25,15 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
         Codebase $codebase,
         array &$file_replacements = []
     ): void {
-        $assignVariables = self::filterCurrentFunctionStatementVar($stmt);
+
+        $stmts = $stmt->getStmts();
+        if ($stmts === null) {
+            // @codeCoverageIgnoreStart
+            return ;
+            // @codeCoverageIgnoreEnd
+        }
+
+        $assignVariables = self::filterStatementsVar($stmts);
 
         /** @var array<string, ?Union> $initVars */
         $initVars = [];
@@ -42,16 +50,14 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
         }
     }
 
-    private static function filterCurrentFunctionStatementVar(PhpParser\Node\FunctionLike $stmt): iterable
+    private static function filterStatementsVar(array $stmts): iterable
     {
-        $stmts = $stmt->getStmts();
-        if ($stmts === null) {
-            // @codeCoverageIgnoreStart
-            return [];
-            // @codeCoverageIgnoreEnd
-        }
 
         foreach ($stmts as $expr) {
+            if (isset($expr->stmts)) {
+                yield from self::filterStatementsVar($expr->stmts);
+            }
+
             if (! ($expr instanceof PhpParser\Node\Stmt\Expression) ||
                 ! ($expr->expr instanceof PhpParser\Node\Expr\Assign) ||
                 ! ($expr->expr->var instanceof PhpParser\Node\Expr\Variable) ||

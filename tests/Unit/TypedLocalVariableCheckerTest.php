@@ -168,6 +168,31 @@ CODE
     /**
      * @test
      */
+    public function nestedStmts(): void
+    {
+        $this->addFile(
+            __METHOD__,
+            <<<'CODE'
+<?php
+function func () : void {
+    $date = new \DateTimeImmutable('now');
+    if (rand() % 2 === 0) {
+        if (rand() % 3 === 0) {
+            $date = new \DateTime("tomorrow");
+        }
+    }
+}
+CODE
+        );
+        $this->analyzeFile(__METHOD__, new Context());
+        $this->assertSame(1, IssueBuffer::getErrorCount());
+        $issue = current(IssueBuffer::getIssuesData())[0];
+        $this->assertSame('$date = new \DateTime("tomorrow");', trim($issue->snippet));
+    }
+
+    /**
+     * @test
+     */
     public function mixedTypeCoercion(): void
     {
         $this->addFile(

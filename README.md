@@ -3,48 +3,81 @@
 finding mismatch type assignment in function/method scope with psalm.
 
 ## disclaimer
-This is VERY VERY VERY **Experimental** .
+This is VERY VERY **Experimental** .
 
 ## Limitation
 
 * NOT support global variables.
 * NOT support variables in namespace. 
 
-## Todo
- - [x] Support Closure scope isolated from function scope.
- - [x] type comparison with psalm's TypeAnalyzer.
- - [x] function/method parameter treat as local variable.
- - [ ] provide specific Issue classes by this Plugin
- - [ ] ... and more tests.
-
 ## demo
-```
-./vendor/bin/psalm -c demo.psalm.xml
+
+```php
+<?php
+namespace X {
+
+    interface Mock{}
+
+    /** @return \DateTimeInterface&Mock */
+    function date_mock() {
+        return new class('now') extends \DateTime implements Mock{};
+    };
+
+    class Klass {
+        public function method() : void {
+            /** @var string|null $nullable_string */
+            $nullable_string = null;
+            $nullable_string = "a";
+            $nullable_string = true; // error
+
+            $bool = true; //direct typed without doc-block
+            $bool = 1; //error
+
+            /** @var \DateTimeInterface&Mock $intersection_type */
+            $intersection_type = new \DateTime('now'); // error
+            $intersection_type = date_mock();
+
+            (static function(): void {
+                /** @var \DateTimeImmutable $date  */
+                $date = new \DateTimeImmutable('now');
+
+                if (rand() % 2 === 0) {
+                    $date = new \DateTime('tomorrow'); // error
+                }
+            })();
+        }
+    }
+}
 ```
 
-```
+
+```bash
+$ ./vendor/bin/psalm -c demo.psalm.xml
 Scanning files...
 Analyzing files...
 
 E
 
-ERROR: UnmatchedTypeIssue - demo/demo.php:8:18 - original types are int, but assigned types are string (see https://psalm.dev/000)
-            $x = "a";
+ERROR: InvalidScalarTypedLocalVariableIssue - demo/demo.php:16:32 - Type true should be a subtype of null|string (see https://psalm.dev/000)
+            $nullable_string = true; // error
 
 
-ERROR: UnmatchedTypeIssue - demo/demo.php:14:14 - original types are string, but assigned types are int (see https://psalm.dev/000)
-        $x = 1;
+ERROR: InvalidScalarTypedLocalVariableIssue - demo/demo.php:19:21 - Type int(1) should be a subtype of true (see https://psalm.dev/000)
+            $bool = 1; //error
 
 
-ERROR: UnmatchedTypeIssue - demo/demo.php:21:28 - original types are null|string, but assigned types are int (see https://psalm.dev/000)
-        $nullable_string = 3;
+ERROR: InvalidTypedLocalVariableIssue - demo/demo.php:22:34 - Type DateTime should be a subtype of DateTimeInterface&X\Mock (see https://psalm.dev/000)
+            $intersection_type = new \DateTime('now'); // error
 
 
-ERROR: UnmatchedTypeIssue - demo/demo.php:27:17 - original types are DateTimeImmutable, but assigned types are DateTime (see https://psalm.dev/000)
-        $date = new \DateTime('now'); // error
+ERROR: InvalidTypedLocalVariableIssue - demo/demo.php:30:29 - Type DateTime should be a subtype of DateTimeImmutable (see https://psalm.dev/000)
+                    $date = new \DateTime('tomorrow'); // error
 
 
 ------------------------------
 4 errors found
 ------------------------------
+
+Checks took 17.10 seconds and used 194.889MB of memory
+Psalm was able to infer types for 100% of the codebase
 ```
