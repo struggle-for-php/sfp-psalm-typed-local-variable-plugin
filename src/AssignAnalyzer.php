@@ -98,8 +98,7 @@ class AssignAnalyzer
                     new MixedTypeCoercionTypedLocalVariableIssue(
                         'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
                             . $lower_bound_type->getId(),
-                        $code_location,
-                        $function_id
+                        $code_location
                     ),
                     $statements_analyzer->getSuppressedIssues()
                 )
@@ -111,8 +110,7 @@ class AssignAnalyzer
                     new TypeCoercionTypedLocalVariableIssue(
                         'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
                             . $lower_bound_type->getId(),
-                        $code_location,
-                        $function_id
+                        $code_location
                     ),
                     $statements_analyzer->getSuppressedIssues()
                 )
@@ -125,8 +123,7 @@ class AssignAnalyzer
                 new InvalidScalarTypedLocalVariableIssue(
                     'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
                         . $lower_bound_type->getId(),
-                    $code_location,
-                    $function_id
+                    $code_location
                 ),
                 $statements_analyzer->getSuppressedIssues()
             )
@@ -138,8 +135,7 @@ class AssignAnalyzer
                 new InvalidTypedLocalVariableIssue(
                     'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
                         . $lower_bound_type->getId(),
-                    $code_location,
-                    $function_id
+                    $code_location
                 ),
                 $statements_analyzer->getSuppressedIssues()
             )
