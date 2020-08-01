@@ -1,18 +1,30 @@
-# struggle-for-php/sfp-psalm-typed-local-variable-plugin
+# sfp-psalm-typed-local-variable-plugin
 
-finding mismatch type assignment in function/method scope with psalm.
+finding mismatch type assignment in function/method scope with [psalm](https://psalm.dev/).
 
+[![Packagist](https://img.shields.io/packagist/v/struggle-for-php/sfp-psalm-typed-local-variable-plugin.svg)](https://packagist.org/packages/struggle-for-php/sfp-psalm-typed-local-variable-plugin)
 [![Mutation testing badge](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fstruggle-for-php%2Fsfp-psalm-typed-local-variable-plugin%2Fmaster)](https://dashboard.stryker-mutator.io/reports/github.com/struggle-for-php/sfp-psalm-typed-local-variable-plugin/master)
 [![Psalm coverage](https://shepherd.dev/github/struggle-for-php/sfp-psalm-typed-local-variable-plugin/coverage.svg?)](https://shepherd.dev/github/struggle-for-php/sfp-psalm-typed-local-variable-plugin)
 
 
-## disclaimer
+## Disclaimer
 This is VERY VERY **Experimental** .
 
 ## Limitation
 
 * NOT support global variables.
-* NOT support variables in namespace. 
+* NOT support variables in namespace.
+* NOT support [Variable variables](https://php.net/language.variables.variable) 
+
+## Installation
+```
+$ composer require --dev struggle-for-php/sfp-psalm-typed-local-variable-plugin
+$ vendor/bin/psalm-plugin enable struggle-for-php/sfp-psalm-typed-local-variable-plugin
+```
+
+## Todo
+ - [ ] optional setting for only from_docblock typed.
+ - [ ] support Variable variables. 
 
 ## 
 ```

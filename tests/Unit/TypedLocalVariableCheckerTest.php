@@ -236,4 +236,31 @@ CODE
         $issue = current(IssueBuffer::getIssuesData())[0];
         $this->assertSame('TypeCoercionTypedLocalVariableIssue', $issue->type);
     }
+
+
+    /**
+     * @test
+     */
+    public function psalmType() : void
+    {
+        $this->addFile(__METHOD__, <<<'CODE'
+<?php
+/**
+ * @psalm-type TSpecialType = bool|int
+ */
+class A
+{
+    public function method(): void
+    {
+        /** @var TSpecialType $x */
+        $x = "a";
+    }
+}
+CODE
+        );
+        $this->analyzeFile(__METHOD__, new Context());
+        $this->assertSame(1, IssueBuffer::getErrorCount());
+        $issue = current(IssueBuffer::getIssuesData())[0];
+        $this->assertSame('InvalidScalarTypedLocalVariableIssue', $issue->type);
+    }
 }
