@@ -14,6 +14,12 @@ This is VERY VERY **Experimental** .
 * NOT support global variables.
 * NOT support variables in namespace. 
 
+## 
+```
+$ composer require --dev struggle-for-php/sfp-psalm-typed-local-variable-plugin
+$ vendor/bin/psalm-plugin enable struggle-for-php/sfp-psalm-typed-local-variable-plugin
+```
+
 ## demo
 
 ```php
