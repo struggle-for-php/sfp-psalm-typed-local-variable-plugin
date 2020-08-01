@@ -46,7 +46,9 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
     {
         $stmts = $stmt->getStmts();
         if ($stmts === null) {
+            // @codeCoverageIgnoreStart
             return [];
+            // @codeCoverageIgnoreEnd
         }
 
         foreach ($stmts as $expr) {
@@ -55,10 +57,6 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
                 ! ($expr->expr->var instanceof PhpParser\Node\Expr\Variable) ||
                 $expr->expr->var->name instanceof PhpParser\Node\Expr
             ) {
-                continue;
-            }
-
-            if (($stmt->getStartFilePos() >= $expr->expr->getStartFilePos()) || ($expr->expr->getStartFilePos() >= $stmt->getEndFilePos())) {
                 continue;
             }
 
@@ -82,10 +80,6 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
     ) {
         if ($expr instanceof PhpParser\Node\Expr\Assign && $expr->var instanceof PhpParser\Node\Expr\Variable) {
             if ($expr->var->name instanceof PhpParser\Node\Expr) {
-                return null;
-            }
-
-            if (! isset($context->vars_in_scope['$' . $expr->var->name])) {
                 return null;
             }
 
