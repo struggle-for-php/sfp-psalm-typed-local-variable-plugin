@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Sfp\Psalm\TypedLocalVariablePlugin\Issue;
 
-final class InvalidTypedLocalVariableIssue extends TypedLocalVariableIssue
+use Psalm\Issue\PluginIssue;
+
+final class InvalidTypedLocalVariableIssue extends PluginIssue implements TypedLocalVariableIssueInterface
 {
 
 }

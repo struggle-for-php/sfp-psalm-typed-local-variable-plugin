@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Sfp\Psalm\TypedLocalVariablePlugin\Issue;
 
-final class TypeCoercionTypedLocalVariableIssue extends TypedLocalVariableIssue
+use Psalm\Issue\PluginIssue;
+
+final class TypeCoercionTypedLocalVariableIssue extends PluginIssue implements TypedLocalVariableIssueInterface
 {
 
 }
