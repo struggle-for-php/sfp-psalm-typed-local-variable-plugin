@@ -3,7 +3,6 @@
 
 namespace SfpTest\Psalm\TypedLocalVariablePlugin\Unit;
 
-
 use Psalm\Context;
 use Psalm\IssueBuffer;
 
@@ -25,7 +24,7 @@ function (): void {
     $bar = 1;
 };
 CODE
-);
+        );
         $this->analyzeFile(__METHOD__, new Context());
         $this->assertSame(0, IssueBuffer::getErrorCount());
     }
