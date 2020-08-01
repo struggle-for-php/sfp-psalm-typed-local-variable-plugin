@@ -2,6 +2,10 @@
 
 finding mismatch type assignment in function/method scope with psalm.
 
+[![Mutation testing badge](https://img.shields.io/endpoint?style=flat-square&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fstruggle-for-php%2Fsfp-psalm-psr-log-plugin%2Fmaster)](https://dashboard.stryker-mutator.io/reports/github.com/struggle-for-php/sfp-psalm-psr-log-plugin/master)
+[![Psalm coverage](https://shepherd.dev/github/struggle-for-php/sfp-psalm-typed-local-variable-plugin/coverage.svg?)](https://shepherd.dev/github/struggle-for-php/sfp-psalm-typed-local-variable-plugin)
+
+
 ## disclaimer
 This is VERY VERY **Experimental** .
 
