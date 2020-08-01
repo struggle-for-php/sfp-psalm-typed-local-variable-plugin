@@ -65,15 +65,19 @@ function func () : void {
     $float = 0.2;
     // $float = 1; // allowed
     $float = false;
+    $bool = false;
+    $bool = true;
+    $bool = 1;
 }
 CODE
         );
         $this->analyzeFile(__METHOD__, new Context());
 
-        $this->assertSame(3, IssueBuffer::getErrorCount());
+        $this->assertSame(4, IssueBuffer::getErrorCount());
         $this->assertSame('$string = false;', trim(current(IssueBuffer::getIssuesData())[0]->snippet));
         $this->assertSame('$int = false;', trim(current(IssueBuffer::getIssuesData())[1]->snippet));
         $this->assertSame('$float = false;', trim(current(IssueBuffer::getIssuesData())[2]->snippet));
+        $this->assertSame('$bool = 1;', trim(current(IssueBuffer::getIssuesData())[3]->snippet));
     }
 
     /**

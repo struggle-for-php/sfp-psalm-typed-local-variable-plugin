@@ -13,12 +13,15 @@ use Psalm\Internal\Type\Comparator\TypeComparisonResult;
 use Psalm\Internal\Type\Comparator\UnionTypeComparator;
 use Psalm\IssueBuffer;
 use Psalm\StatementsSource;
+use Psalm\Type\Atomic\TBool;
+use Psalm\Type\Atomic\TFalse;
 use Psalm\Type\Atomic\TFloat;
 use Psalm\Type\Atomic\TInt;
 use Psalm\Type\Atomic\TLiteralFloat;
 use Psalm\Type\Atomic\TLiteralInt;
 use Psalm\Type\Atomic\TLiteralString;
 use Psalm\Type\Atomic\TString;
+use Psalm\Type\Atomic\TTrue;
 use Psalm\Type\Union;
 use Sfp\Psalm\TypedLocalVariablePlugin\Issue\InvalidScalarTypedLocalVariableIssue;
 use Sfp\Psalm\TypedLocalVariablePlugin\Issue\InvalidTypedLocalVariableIssue;
@@ -54,6 +57,8 @@ class AssignAnalyzer
                 $types[] = new TInt();
             } elseif ($atomicType instanceof TLiteralFloat) {
                 $types[] = new TFloat();
+            } elseif ($atomicType instanceof TFalse || $atomicType instanceof TTrue) {
+                $types[] = new TBool();
             } else {
                 $types[] = $atomicType;
             }
