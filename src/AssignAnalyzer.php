@@ -24,6 +24,8 @@ use Psalm\Type\Atomic\TLiteralInt;
 use Psalm\Type\Atomic\TLiteralString;
 use Psalm\Type\Atomic\TString;
 use Psalm\Type\Union;
+use Sfp\Psalm\TypedLocalVariablePlugin\Issue\InvalidScalarTypedLocalVariableIssue;
+use Sfp\Psalm\TypedLocalVariablePlugin\Issue\InvalidTypedLocalVariableIssue;
 
 class AssignAnalyzer
 {
@@ -122,7 +124,7 @@ class AssignAnalyzer
             }
         } elseif ($union_comparison_result->scalar_type_match_found) {
             if (IssueBuffer::accepts(
-                new InvalidScalarArgument(
+                new InvalidScalarTypedLocalVariableIssue(
                     'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
                         . $lower_bound_type->getId(),
                     $code_location,
@@ -135,7 +137,7 @@ class AssignAnalyzer
             }
         } else {
             if (IssueBuffer::accepts(
-                new InvalidArgument(
+                new InvalidTypedLocalVariableIssue(
                     'Type ' . $upper_bound_type->getId() . ' should be a subtype of '
                         . $lower_bound_type->getId(),
                     $code_location,
