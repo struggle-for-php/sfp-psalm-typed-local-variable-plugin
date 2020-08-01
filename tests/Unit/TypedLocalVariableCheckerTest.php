@@ -55,17 +55,25 @@ CODE
             <<<'CODE'
 <?php
 function func () : void {
-    $x = "s";
-    $x = "string2";    
-    $x = false;
+    $string = "string";
+    $string = "string2";
+    $string = false;
+    $int = 1;
+    $int = 2;
+    $int = false;
+    $float = 0.1;
+    $float = 0.2;
+    // $float = 1; // allowed
+    $float = false;
 }
 CODE
         );
         $this->analyzeFile(__METHOD__, new Context());
 
-        $this->assertSame(1, IssueBuffer::getErrorCount());
-        $issue = current(IssueBuffer::getIssuesData())[0];
-        $this->assertSame('$x = false;', trim($issue->snippet));
+        $this->assertSame(3, IssueBuffer::getErrorCount());
+        $this->assertSame('$string = false;', trim(current(IssueBuffer::getIssuesData())[0]->snippet));
+        $this->assertSame('$int = false;', trim(current(IssueBuffer::getIssuesData())[1]->snippet));
+        $this->assertSame('$float = false;', trim(current(IssueBuffer::getIssuesData())[2]->snippet));
     }
 
     /**
