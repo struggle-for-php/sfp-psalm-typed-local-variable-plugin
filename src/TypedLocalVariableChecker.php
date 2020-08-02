@@ -13,6 +13,7 @@ use Psalm\Plugin\Hook\AfterFunctionLikeAnalysisInterface;
 use Psalm\StatementsSource;
 use Psalm\Storage\FunctionLikeStorage;
 use Psalm\Type\Union;
+use function is_array;
 
 final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterface, AfterFunctionLikeAnalysisInterface
 {
