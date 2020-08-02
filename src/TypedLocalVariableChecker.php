@@ -50,11 +50,14 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
         }
     }
 
-    private static function filterStatementsVar(array $stmts): iterable
+    /**
+     * @param PhpParser\Node\Stmt[] $stmts
+     * @return \Generator<string, array{expr: PhpParser\Node\Expr\Assign, context_var: Union, statements_source: StatementsSource}, null, void>
+     */
+    private static function filterStatementsVar(array $stmts): \Generator
     {
-
         foreach ($stmts as $expr) {
-            if (isset($expr->stmts)) {
+            if (isset($expr->stmts) && is_array($expr->stmts)) {
                 yield from self::filterStatementsVar($expr->stmts);
             }
 
