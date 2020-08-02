@@ -70,7 +70,13 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
                 continue;
             }
 
-            yield $expr->expr->var->name => ['expr' => $expr->expr] + $expr->expr->getAttribute(self::CONTEXT_ATTRIBUTE_KEY);
+            /** @var array{context_var: Union, statements_source: StatementsSource}|null $assign_variable_context */
+            $assign_variable_context = $expr->expr->getAttribute(self::CONTEXT_ATTRIBUTE_KEY);
+            if ($assign_variable_context === null) {
+                continue;
+            }
+
+            yield $expr->expr->var->name => ['expr' => $expr->expr] + $assign_variable_context;
         }
     }
 
