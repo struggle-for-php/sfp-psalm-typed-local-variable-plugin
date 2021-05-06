@@ -11,7 +11,7 @@ use SimpleXMLElement;
 class Plugin implements PluginEntryPointInterface
 {
     /** @inheritDoc */
-    public function __invoke(RegistrationInterface $psalm, ?SimpleXMLElement $config = null)
+    public function __invoke(RegistrationInterface $psalm, ?SimpleXMLElement $config = null) : void
     {
         require_once __DIR__ . '/TypedLocalVariableChecker.php';
         $psalm->registerHooksFromClass(TypedLocalVariableChecker::class);
