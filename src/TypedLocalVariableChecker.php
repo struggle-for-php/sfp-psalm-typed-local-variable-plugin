@@ -21,16 +21,16 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
 
     public static function afterStatementAnalysis(
         PhpParser\Node\FunctionLike $stmt,
-        FunctionLikeStorage $function_like_storage,
+        FunctionLikeStorage $classlike_storage,
         StatementsSource $statements_source,
         Codebase $codebase,
         array &$file_replacements = []
-    ): void {
+    ): ?bool {
 
         $stmts = $stmt->getStmts();
         if ($stmts === null) {
             // @codeCoverageIgnoreStart
-            return ;
+            return null;
             // @codeCoverageIgnoreEnd
         }
 
@@ -38,7 +38,7 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
 
         /** @var array<string, ?Union> $initVars */
         $initVars = [];
-        foreach ($function_like_storage->params as $param) {
+        foreach ($classlike_storage->params as $param) {
             $initVars[$param->name] = $param->type;
         }
 
@@ -49,6 +49,8 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
 
             AssignAnalyzer::analyzeAssign($assignVariable['expr'], $initVars[$name], $codebase, $assignVariable['statements_source']);
         }
+
+        return null;
     }
 
     /**
@@ -93,7 +95,7 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
         StatementsSource $statements_source,
         Codebase $codebase,
         array &$file_replacements = []
-    ) {
+    ) :?bool {
         if ($expr instanceof PhpParser\Node\Expr\Assign && $expr->var instanceof PhpParser\Node\Expr\Variable) {
             if ($expr->var->name instanceof PhpParser\Node\Expr) {
                 return null;
@@ -106,5 +108,7 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
 
             return null;
         }
+
+        return null;
     }
 }

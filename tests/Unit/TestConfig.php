@@ -4,23 +4,18 @@ declare(strict_types=1);
 
 namespace SfpTest\Psalm\TypedLocalVariablePlugin\Unit;
 
-use Psalm\Config;
-use Sfp\Psalm\TypedLocalVariablePlugin\Plugin;
-use SimpleXMLElement;
-
-use function getcwd;
-
 use const DIRECTORY_SEPARATOR;
+use function getcwd;
+use Psalm\Config;
+use Psalm\Internal\IncludeCollector;
 
 /**
- * borrowed from psalm 3.12.0 (not HEAD)
- * https://github.com/vimeo/psalm/blob/3.12.0/tests/TestConfig.php
- *
- * @see https://github.com/vimeo/psalm/pull/3183
+ * borrowed from psalm
  */
-final class TestConfig extends Config
+class TestConfig extends Config
 {
-    private static ?Config\ProjectFileFilter $cached_project_files = null;
+    /** @var Config\ProjectFileFilter|null */
+    private static $cached_project_files = null;
 
     /**
      * @psalm-suppress PossiblyNullPropertyAssignmentValue because cache_directory isn't strictly nullable
@@ -28,34 +23,32 @@ final class TestConfig extends Config
     public function __construct()
     {
         parent::__construct();
-        $this->addPluginClass(Plugin::class);
 
-        $this->throw_exception    = false;
+        $this->throw_exception = true;
         $this->use_docblock_types = true;
-        $this->level              = 1;
-        $this->cache_directory    = null;
+        $this->level = 1;
+        $this->cache_directory = null;
 
         $this->base_dir = getcwd() . DIRECTORY_SEPARATOR;
 
-
-        if (! self::$cached_project_files) {
+        if (!self::$cached_project_files) {
             self::$cached_project_files = Config\ProjectFileFilter::loadFromXMLElement(
-                new SimpleXMLElement($this->getContents()),
+                new \SimpleXMLElement($this->getContents()),
                 $this->base_dir,
                 true
             );
         }
 
         $this->project_files = self::$cached_project_files;
+        $this->setIncludeCollector(new IncludeCollector());
 
         $this->collectPredefinedConstants();
         $this->collectPredefinedFunctions();
     }
 
-    protected function getContents(): string
+    protected function getContents() : string
     {
-        return <<<'EOF'
-<?xml version="1.0"?>
+        return '<?xml version="1.0"?>
 <psalm>
     <projectFiles>
         <directory name="src" />
@@ -63,17 +56,20 @@ final class TestConfig extends Config
     <plugins>
         <pluginClass class="Sfp\Psalm\TypedLocalVariablePlugin\Plugin" />
     </plugins>
-</psalm>
-EOF;
+</psalm>';
     }
 
-    public function getComposerFilePathForClassLike($fq_classlike_name)
+    /**
+     * @return false
+     */
+    public function getComposerFilePathForClassLike(string $fq_classlike_name): bool
     {
         return false;
     }
 
-    public function getProjectDirectories()
+    public function getProjectDirectories(): array
     {
         return [];
     }
 }
+

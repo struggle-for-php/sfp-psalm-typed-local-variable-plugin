@@ -1,47 +1,41 @@
 <?php
-
-declare(strict_types=1);
-
 namespace SfpTest\Psalm\TypedLocalVariablePlugin\Unit;
-
-use PHPUnit\Framework\TestCase as BaseTestCase;
-use Psalm\Config;
-use Psalm\Context;
-use Psalm\Internal\Analyzer\FileAnalyzer;
-use Psalm\Internal\Analyzer\ProjectAnalyzer;
-use Psalm\Internal\Provider\Providers;
-use Psalm\IssueBuffer;
-use RuntimeException;
-use SfpTest\Psalm\TypedLocalVariablePlugin\Unit\Internal\Provider;
 
 use function define;
 use function defined;
+use const DIRECTORY_SEPARATOR;
 use function getcwd;
 use function ini_set;
 use function method_exists;
+use PHPUnit\Framework\TestCase as BaseTestCase;
+use Psalm\Config;
+use Psalm\Internal\Analyzer\FileAnalyzer;
+use Psalm\Internal\Analyzer\ProjectAnalyzer;
+use Psalm\Internal\Provider\Providers;
+use Psalm\Internal\RuntimeCaches;
+use SfpTest\Psalm\TypedLocalVariablePlugin\Unit\Internal\Provider;
+use RuntimeException;
 
-use const DIRECTORY_SEPARATOR;
-
-/**
- * borrowed from psalm
- */
-abstract class AbstractTestCase extends BaseTestCase
+class AbstractTestCase extends BaseTestCase
 {
-    protected static string $src_dir_path;
+    /** @var string */
+    protected static $src_dir_path;
 
-    protected ProjectAnalyzer $project_analyzer;
+    /** @var ProjectAnalyzer */
+    protected $project_analyzer;
 
-    protected Provider\FakeFileProvider $file_provider;
+    /** @var Provider\FakeFileProvider */
+    protected $file_provider;
 
-    public static function setUpBeforeClass(): void
+    public static function setUpBeforeClass() : void
     {
         ini_set('memory_limit', '-1');
 
-        if (! defined('PSALM_VERSION')) {
+        if (!defined('PSALM_VERSION')) {
             define('PSALM_VERSION', '2.0.0');
         }
 
-        if (! defined('PHP_PARSER_VERSION')) {
+        if (!defined('PHP_PARSER_VERSION')) {
             define('PHP_PARSER_VERSION', '4.0.0');
         }
 
@@ -49,16 +43,16 @@ abstract class AbstractTestCase extends BaseTestCase
         self::$src_dir_path = getcwd() . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR;
     }
 
-    protected function makeConfig(): Config
+    protected function makeConfig() : Config
     {
         return new TestConfig();
     }
 
-    public function setUp(): void
+    public function setUp() : void
     {
         parent::setUp();
 
-        FileAnalyzer::clearCache();
+        RuntimeCaches::clearAll();
 
         $this->file_provider = new Provider\FakeFileProvider();
 
@@ -74,28 +68,38 @@ abstract class AbstractTestCase extends BaseTestCase
             $providers
         );
 
-        $this->project_analyzer->setPhpVersion('7.3');
-        $config->initializePlugins($this->project_analyzer);
-
-        IssueBuffer::clear();
+        $this->project_analyzer->setPhpVersion('7.4');
     }
 
-    public function tearDown(): void
+    public function tearDown() : void
     {
-        FileAnalyzer::clearCache();
+        RuntimeCaches::clearAll();
     }
 
-    public function addFile(string $file_path, string $contents): void
+    /**
+     * @param string $file_path
+     * @param string $contents
+     *
+     */
+    public function addFile($file_path, $contents): void
     {
         $this->file_provider->registerFile($file_path, $contents);
         $this->project_analyzer->getCodebase()->scanner->addFileToShallowScan($file_path);
     }
 
-    public function analyzeFile(string $file_path, Context $context, bool $track_unused_suppressions = true): void
+    /**
+     * @param  string         $file_path
+     *
+     */
+    public function analyzeFile($file_path, \Psalm\Context $context, bool $track_unused_suppressions = true, bool $taint_flow_tracking = false): void
     {
         $codebase = $this->project_analyzer->getCodebase();
+
+        if ($taint_flow_tracking) {
+            $this->project_analyzer->trackTaintedInputs();
+        }
+
         $codebase->addFilesToAnalyze([$file_path => $file_path]);
-        // $codebase->find_unused_code = 'always';
 
         $codebase->scanFiles();
 
@@ -107,7 +111,6 @@ abstract class AbstractTestCase extends BaseTestCase
 
         $this->project_analyzer->trackUnusedSuppressions();
 
-
         $file_analyzer = new FileAnalyzer(
             $this->project_analyzer,
             $file_path,
@@ -115,24 +118,26 @@ abstract class AbstractTestCase extends BaseTestCase
         );
         $file_analyzer->analyze($context);
 
-        if ($codebase->taint) {
-            $codebase->taint->connectSinksAndSources();
+        if ($codebase->taint_flow_graph) {
+            $codebase->taint_flow_graph->connectSinksAndSources();
         }
 
-        if (! $track_unused_suppressions) {
-            return;
+        if ($track_unused_suppressions) {
+            \Psalm\IssueBuffer::processUnusedSuppressions($codebase->file_provider);
         }
-
-        IssueBuffer::processUnusedSuppressions($codebase->file_provider);
     }
 
-    protected function getTestName(bool $withDataSet = true): string
+    /**
+     * @param  bool $withDataSet
+     *
+     */
+    protected function getTestName($withDataSet = true): string
     {
         $name = parent::getName($withDataSet);
         /**
          * @psalm-suppress TypeDoesNotContainNull PHPUnit 8.2 made it non-nullable again
          */
-        if ($name === null) {
+        if (null === $name) {
             throw new RuntimeException('anonymous test - shouldn\'t happen');
         }
 
