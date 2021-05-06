@@ -13,8 +13,8 @@
   "require": {
     "php" : "^7.4.3|^8",
     "ext-simplexml": "*",
-    "vimeo/psalm": "^3.13",
-    "nikic/php-parser": "4.6.*"
+    "vimeo/psalm": "^4",
+    "nikic/php-parser": "^4.10"
   },
   "require-dev": {
     "squizlabs/php_codesniffer": "^3.3",
