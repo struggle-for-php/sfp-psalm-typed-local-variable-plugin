@@ -28,7 +28,7 @@ function date_mock() {
 class Demo
 {
     /** @var Repository */
-    private $respository;
+    private $repository;
 
     function typed_by_phpdoc() : void
     {
@@ -53,7 +53,7 @@ class Demo
     function mismatch_by_return() : void
     {
         /** @var Entity $entity */
-        $entity = $this->respository->findOneById(1); // ERROR
+        $entity = $this->repository->findOneById(1); // ERROR
     }
 
     function works_with_intersection() : void
@@ -86,7 +86,7 @@ ERROR: InvalidScalarTypedLocalVariableIssue - demo/demo.php:35:17 - Type 1 shoul
 
 
 ERROR: InvalidTypedLocalVariableIssue - demo/demo.php:41:19 - Type Entity|null should be a subtype of Entity
-        $entity = $this->respository->findOneById(1); // ERROR
+        $entity = $this->repository->findOneById(1); // ERROR
 
 
 ERROR: InvalidTypedLocalVariableIssue - demo/demo.php:47:17 - Type DateTime should be a subtype of DateTimeInterface&Mock

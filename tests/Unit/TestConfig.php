@@ -73,4 +73,3 @@ class TestConfig extends Config
         return [];
     }
 }
-
