@@ -17,5 +17,14 @@
     <issueHandlers>
         <MissingConstructor errorLevel="suppress"/>
         <UnusedVariable errorLevel="suppress"/>
+
+        <!--<PluginIssue name="InvalidScalarTypedLocalVariableIssue">-->
+        <!--    <errorLevel type="suppress">-->
+        <!--        <file name="demo/aa.php"/>-->
+        <!--    </errorLevel>-->
+        <!--</PluginIssue>-->
+        <!--<PluginIssue name="InvalidTypedLocalVariableIssue" errorLevel="suppress" />-->
+        <!--<PluginIssue name="MixedTypeCoercionTypedLocalVariableIssue" errorLevel="suppress" />-->
+        <!--<PluginIssue name="TypeCoercionTypedLocalVariableIssue" errorLevel="suppress" />-->
     </issueHandlers>
 </psalm>
