@@ -40,6 +40,7 @@ function func () : void {
 CODE
         );
         $this->analyzeFile(__METHOD__, new Context());
+
         $this->assertSame('$nullable = false;', trim(current(IssueBuffer::getIssuesData())[0]->snippet));
         $this->assertSame('$union = "string";', trim(current(IssueBuffer::getIssuesData())[1]->snippet));
         $this->assertSame('$array_shape = [\'date\' => \'not DateTimeInterface obj\'];', trim(current(IssueBuffer::getIssuesData())[2]->snippet));
@@ -111,12 +112,13 @@ CODE
             <<<'CODE'
 <?php
 function func () : void {
-    $x = (bool) ( (bool) "string");
+    $x = (bool) true;
     $x = 1;
 }
 CODE
         );
         $this->analyzeFile(__METHOD__, new Context());
+
         $this->assertSame(1, IssueBuffer::getErrorCount());
         $issue = current(IssueBuffer::getIssuesData())[0];
         $this->assertSame('$x = 1;', trim($issue->snippet));

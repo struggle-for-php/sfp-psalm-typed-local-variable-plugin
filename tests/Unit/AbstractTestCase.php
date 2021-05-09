@@ -6,7 +6,6 @@ use function defined;
 use const DIRECTORY_SEPARATOR;
 use function getcwd;
 use function ini_set;
-use function method_exists;
 use PHPUnit\Framework\TestCase as BaseTestCase;
 use Psalm\Config;
 use Psalm\Internal\Analyzer\FileAnalyzer;
@@ -69,6 +68,7 @@ class AbstractTestCase extends BaseTestCase
         );
 
         $this->project_analyzer->setPhpVersion('7.4');
+        $config->initializePlugins($this->project_analyzer);
     }
 
     public function tearDown() : void
@@ -76,22 +76,13 @@ class AbstractTestCase extends BaseTestCase
         RuntimeCaches::clearAll();
     }
 
-    /**
-     * @param string $file_path
-     * @param string $contents
-     *
-     */
-    public function addFile($file_path, $contents): void
+    public function addFile(string $file_path, string $contents): void
     {
         $this->file_provider->registerFile($file_path, $contents);
         $this->project_analyzer->getCodebase()->scanner->addFileToShallowScan($file_path);
     }
 
-    /**
-     * @param  string         $file_path
-     *
-     */
-    public function analyzeFile($file_path, \Psalm\Context $context, bool $track_unused_suppressions = true, bool $taint_flow_tracking = false): void
+    public function analyzeFile(string $file_path, \Psalm\Context $context, bool $track_unused_suppressions = true, bool $taint_flow_tracking = false): void
     {
         $codebase = $this->project_analyzer->getCodebase();
 
@@ -127,11 +118,7 @@ class AbstractTestCase extends BaseTestCase
         }
     }
 
-    /**
-     * @param  bool $withDataSet
-     *
-     */
-    protected function getTestName($withDataSet = true): string
+    protected function getTestName(bool $withDataSet = true): string
     {
         $name = parent::getName($withDataSet);
         /**
@@ -142,27 +129,5 @@ class AbstractTestCase extends BaseTestCase
         }
 
         return $name;
-    }
-
-    /**
-     * Compatibility alias
-     */
-    public function expectExceptionMessageRegExp(string $regexp): void
-    {
-        if (method_exists($this, 'expectExceptionMessageMatches')) {
-            $this->expectExceptionMessageMatches($regexp);
-        } else {
-            /** @psalm-suppress UndefinedMethod */
-            parent::expectExceptionMessageRegExp($regexp);
-        }
-    }
-
-    public static function assertRegExp(string $pattern, string $string, string $message = ''): void
-    {
-        if (method_exists(self::class, 'assertMatchesRegularExpression')) {
-            self::assertMatchesRegularExpression($pattern, $string, $message);
-        } else {
-            parent::assertRegExp($pattern, $string, $message);
-        }
     }
 }

@@ -8,7 +8,95 @@ finding mismatch type assignment in function/method scope with [psalm](https://p
 
 
 ## Disclaimer
-This is VERY VERY **Experimental** .
+This is **Experimental** plugin.
+
+## Demo
+
+```php
+<?php
+class Entity{}
+interface Repository
+{
+    public function findOneById(int $id): ?Entity;
+}
+interface Mock{}
+/** @return \DateTimeInterface&Mock */
+function date_mock() {
+    return new class('now') extends \DateTime implements Mock{};
+}
+
+class Demo
+{
+    /** @var Repository */
+    private $respository;
+
+    function typed_by_phpdoc() : void
+    {
+        /** @var string|null $nullable_string */
+        $nullable_string = null;
+        $nullable_string = "a";
+        $nullable_string = true; // ERROR
+    }
+
+    function typed_by_assignement() : void
+    {
+        $date = new \DateTimeImmutable('now');
+        if (\rand() % 2 === 0) {
+            $date = new \DateTime('tomorrow'); // ERROR
+        }
+
+        $bool = true; //direct typed without doc-block
+        $bool = false; // ok (currently, this plugin treats true|false as bool)
+        $bool = 1; // ERROR
+    }
+
+    function mismatch_by_return() : void
+    {
+        /** @var Entity $entity */
+        $entity = $this->respository->findOneById(1); // ERROR
+    }
+
+    function works_with_intersection() : void
+    {
+        /** @var \DateTimeInterface&Mock $date */
+        $date = new \DateTime('now'); // ERROR
+        $date = date_mock(); // success
+    }
+}
+```
+
+
+```bash
+$ ./vendor/bin/psalm -c demo.psalm.xml
+Scanning files...
+Analyzing files...
+
+E
+
+ERROR: InvalidScalarTypedLocalVariableIssue - demo/demo.php:23:28 - Type true should be a subtype of null|string
+        $nullable_string = true; // ERROR
+
+
+ERROR: InvalidTypedLocalVariableIssue - demo/demo.php:30:21 - Type DateTime should be a subtype of DateTimeImmutable
+            $date = new \DateTime('tomorrow'); // ERROR
+
+
+ERROR: InvalidScalarTypedLocalVariableIssue - demo/demo.php:35:17 - Type 1 should be a subtype of bool
+        $bool = 1; // ERROR
+
+
+ERROR: InvalidTypedLocalVariableIssue - demo/demo.php:41:19 - Type Entity|null should be a subtype of Entity
+        $entity = $this->respository->findOneById(1); // ERROR
+
+
+ERROR: InvalidTypedLocalVariableIssue - demo/demo.php:47:17 - Type DateTime should be a subtype of DateTimeInterface&Mock
+        $date = new \DateTime('now'); // ERROR
+
+
+------------------------------
+5 errors found
+------------------------------
+```
 
 ## Limitation
 
@@ -29,7 +117,6 @@ $var1 = 'string';
 $var2 = true;
 ```
 
-
 ## Installation
 ```
 $ composer require --dev struggle-for-php/sfp-psalm-typed-local-variable-plugin
@@ -37,77 +124,4 @@ $ vendor/bin/psalm-plugin enable struggle-for-php/sfp-psalm-typed-local-variable
 ```
 
 ## Todo
- - [ ] optional setting for only from_docblock typed.
- - [ ] support Variable variables. 
-
-## Demo
-
-```php
-<?php
-namespace X {
-
-    interface Mock{}
-
-    /** @return \DateTimeInterface&Mock */
-    function date_mock() {
-        return new class('now') extends \DateTime implements Mock{};
-    };
-
-    class Klass {
-        public function method() : void {
-            /** @var string|null $nullable_string */
-            $nullable_string = null;
-            $nullable_string = "a";
-            $nullable_string = true; // error
-
-            $bool = true; //direct typed without doc-block
-            $bool = 1; //error
-
-            /** @var \DateTimeInterface&Mock $intersection_type */
-            $intersection_type = new \DateTime('now'); // error
-            $intersection_type = date_mock();
-
-            (static function(): void {
-                /** @var \DateTimeImmutable $date  */
-                $date = new \DateTimeImmutable('now');
-
-                if (rand() % 2 === 0) {
-                    $date = new \DateTime('tomorrow'); // error
-                }
-            })();
-        }
-    }
-}
-```
-
-
-```bash
-$ ./vendor/bin/psalm -c demo.psalm.xml
-Scanning files...
-Analyzing files...
-
-E
-
-ERROR: InvalidScalarTypedLocalVariableIssue - demo/demo.php:16:32 - Type true should be a subtype of null|string (see https://psalm.dev/000)
-            $nullable_string = true; // error
-
-
-ERROR: InvalidScalarTypedLocalVariableIssue - demo/demo.php:19:21 - Type int(1) should be a subtype of true (see https://psalm.dev/000)
-            $bool = 1; //error
-
-
-ERROR: InvalidTypedLocalVariableIssue - demo/demo.php:22:34 - Type DateTime should be a subtype of DateTimeInterface&X\Mock (see https://psalm.dev/000)
-            $intersection_type = new \DateTime('now'); // error
-
-
-ERROR: InvalidTypedLocalVariableIssue - demo/demo.php:30:29 - Type DateTime should be a subtype of DateTimeImmutable (see https://psalm.dev/000)
-                    $date = new \DateTime('tomorrow'); // error
-
-
-------------------------------
-4 errors found
-------------------------------
-
-Checks took 17.10 seconds and used 194.889MB of memory
-Psalm was able to infer types for 100% of the codebase
-```
+- [ ] optional setting for only from_docblock typed.

@@ -5,13 +5,10 @@ declare(strict_types=1);
 namespace Sfp\Psalm\TypedLocalVariablePlugin;
 
 use PhpParser;
-use Psalm\Codebase;
-use Psalm\Context;
-use Psalm\FileManipulation;
-use Psalm\Plugin\Hook\AfterExpressionAnalysisInterface;
-use Psalm\Plugin\Hook\AfterFunctionLikeAnalysisInterface;
-use Psalm\StatementsSource;
-use Psalm\Storage\FunctionLikeStorage;
+use Psalm\Plugin\EventHandler\AfterExpressionAnalysisInterface;
+use Psalm\Plugin\EventHandler\AfterFunctionLikeAnalysisInterface;
+use Psalm\Plugin\EventHandler\Event\AfterExpressionAnalysisEvent;
+use Psalm\Plugin\EventHandler\Event\AfterFunctionLikeAnalysisEvent;
 use Psalm\Type\Union;
 use function is_array;
 
@@ -20,14 +17,9 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
     private const CONTEXT_ATTRIBUTE_KEY = '__sfp_psalm_context';
 
     public static function afterStatementAnalysis(
-        PhpParser\Node\FunctionLike $stmt,
-        FunctionLikeStorage $classlike_storage,
-        StatementsSource $statements_source,
-        Codebase $codebase,
-        array &$file_replacements = []
+        AfterFunctionLikeAnalysisEvent $event
     ): ?bool {
-
-        $stmts = $stmt->getStmts();
+        $stmts = $event->getStmt()->getStmts();
         if ($stmts === null) {
             // @codeCoverageIgnoreStart
             return null;
@@ -38,7 +30,7 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
 
         /** @var array<string, ?Union> $initVars */
         $initVars = [];
-        foreach ($classlike_storage->params as $param) {
+        foreach ($event->getClasslikeStorage()->params as $param) {
             $initVars[$param->name] = $param->type;
         }
 
@@ -47,14 +39,13 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
                 $initVars[$name] = $assignVariable['context_var'];
             }
 
-            AssignAnalyzer::analyzeAssign($assignVariable['expr'], $initVars[$name], $codebase, $assignVariable['statements_source']);
+            AssignAnalyzer::analyzeAssign($assignVariable['expr'], $initVars[$name], $event->getCodebase(), $assignVariable['statements_source']);
         }
 
         return null;
     }
 
     /**
-     * @param PhpParser\Node\Stmt[] $stmts
      * @return \Generator<string, array{expr: PhpParser\Node\Expr\Assign, context_var: Union, statements_source: StatementsSource}, null, void>
      */
     private static function filterStatementsVar(array $stmts): \Generator
@@ -85,25 +76,20 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
     /**
      * Called after an expression has been checked
      *
-     * @param  FileManipulation[] $file_replacements
-     *
      * @return false|null
      */
     public static function afterExpressionAnalysis(
-        PhpParser\Node\Expr $expr,
-        Context $context,
-        StatementsSource $statements_source,
-        Codebase $codebase,
-        array &$file_replacements = []
+        AfterExpressionAnalysisEvent $event
     ) :?bool {
+        $expr = $event->getExpr();
         if ($expr instanceof PhpParser\Node\Expr\Assign && $expr->var instanceof PhpParser\Node\Expr\Variable) {
             if ($expr->var->name instanceof PhpParser\Node\Expr) {
                 return null;
             }
 
             $expr->setAttribute(self::CONTEXT_ATTRIBUTE_KEY, [
-                'context_var' => $context->vars_in_scope['$' . $expr->var->name], // assign timing context var.
-                'statements_source' => $statements_source,
+                'context_var' => $event->getContext()->vars_in_scope['$' . $expr->var->name], // assign timing context var.
+                'statements_source' => $event->getStatementsSource(),
             ]);
 
             return null;

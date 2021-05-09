@@ -9,12 +9,13 @@
 >
     <projectFiles>
         <directory name="demo"/>
-        <ignoreFiles>
-            <directory name="src"/>
-            <directory name="vendor"/>
-        </ignoreFiles>
     </projectFiles>
     <plugins>
         <pluginClass class="Sfp\Psalm\TypedLocalVariablePlugin\Plugin" />
     </plugins>
+
+    <issueHandlers>
+        <MissingConstructor errorLevel="suppress"/>
+        <UnusedVariable errorLevel="suppress"/>
+    </issueHandlers>
 </psalm>

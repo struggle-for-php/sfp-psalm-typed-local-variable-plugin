@@ -7,6 +7,7 @@ namespace SfpTest\Psalm\TypedLocalVariablePlugin\Unit;
 use const DIRECTORY_SEPARATOR;
 use function getcwd;
 use Psalm\Config;
+use Sfp\Psalm\TypedLocalVariablePlugin\Plugin;
 use Psalm\Internal\IncludeCollector;
 
 /**
@@ -14,8 +15,7 @@ use Psalm\Internal\IncludeCollector;
  */
 class TestConfig extends Config
 {
-    /** @var Config\ProjectFileFilter|null */
-    private static $cached_project_files = null;
+    private static ?Config\ProjectFileFilter $cached_project_files = null;
 
     /**
      * @psalm-suppress PossiblyNullPropertyAssignmentValue because cache_directory isn't strictly nullable
@@ -23,8 +23,9 @@ class TestConfig extends Config
     public function __construct()
     {
         parent::__construct();
+        $this->addPluginClass(Plugin::class);
 
-        $this->throw_exception = true;
+        $this->throw_exception = false;
         $this->use_docblock_types = true;
         $this->level = 1;
         $this->cache_directory = null;
