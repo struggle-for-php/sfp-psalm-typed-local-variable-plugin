@@ -46,7 +46,11 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
     }
 
     /**
-     * @return \Generator<string, array{expr: PhpParser\Node\Expr\Assign, context_var: Union, statements_source: StatementsSource}, null, void>
+     * @return \Generator<string, array{
+     *     expr: PhpParser\Node\Expr\Assign,
+     *     context_var: Union,
+     *     statements_source: \Psalm\StatementsSource
+     * }, null, void>
      */
     private static function filterStatementsVar(array $stmts): \Generator
     {
@@ -63,7 +67,11 @@ final class TypedLocalVariableChecker implements AfterExpressionAnalysisInterfac
                 continue;
             }
 
-            /** @var array{context_var: Union, statements_source: StatementsSource}|null $assign_variable_context */
+            /** @var array{
+             *      context_var: Union,
+             *      statements_source: \Psalm\StatementsSource
+             * }|null $assign_variable_context
+             */
             $assign_variable_context = $expr->expr->getAttribute(self::CONTEXT_ATTRIBUTE_KEY);
             if ($assign_variable_context === null) {
                 continue;
