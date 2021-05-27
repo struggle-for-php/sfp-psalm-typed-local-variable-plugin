@@ -7,7 +7,7 @@
   "logs": {
     "text": "php://stderr",
     "badge": {
-      "branch": "master"
+      "branch": "0.2.x"
     }
   },
   "mutators": {

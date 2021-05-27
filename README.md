@@ -3,12 +3,16 @@
 finding mismatch type assignment in function/method scope with [psalm](https://psalm.dev/).
 
 [![Packagist](https://img.shields.io/packagist/v/struggle-for-php/sfp-psalm-typed-local-variable-plugin.svg)](https://packagist.org/packages/struggle-for-php/sfp-psalm-typed-local-variable-plugin)
-[![Mutation testing badge](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fstruggle-for-php%2Fsfp-psalm-typed-local-variable-plugin%2Fmaster)](https://dashboard.stryker-mutator.io/reports/github.com/struggle-for-php/sfp-psalm-typed-local-variable-plugin/master)
+[![Mutation testing badge](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fstruggle-for-php%2Fsfp-psalm-typed-local-variable-plugin%2F0.2.x)](https://dashboard.stryker-mutator.io/reports/github.com/struggle-for-php/sfp-psalm-typed-local-variable-plugin/0.2.x)
 [![Psalm coverage](https://shepherd.dev/github/struggle-for-php/sfp-psalm-typed-local-variable-plugin/coverage.svg?)](https://shepherd.dev/github/struggle-for-php/sfp-psalm-typed-local-variable-plugin)
 
+## Installation
+```
+$ composer require --dev struggle-for-php/sfp-psalm-typed-local-variable-plugin
+$ vendor/bin/psalm-plugin enable struggle-for-php/sfp-psalm-typed-local-variable-plugin
+```
 
-## Disclaimer
-This is **Experimental** plugin.
+latest version supports psalm `^4`.
 
 ## Demo
 
@@ -98,6 +102,56 @@ ERROR: InvalidTypedLocalVariableIssue - demo/demo.php:47:17 - Type DateTime shou
 ------------------------------
 ```
 
+## Plugin Issues
+
+All issue names has `TypedLocalVariableIssue` suffix.
+
+* MixedTypeCoercionTypedLocalVariableIssue
+  * nearly [MixedArgumentTypeCoercion](https://psalm.dev/docs/running_psalm/issues/MixedArgumentTypeCoercion)
+
+eg.  
+```php
+function foo(array $a) : void {
+    /** @var string[] $x */
+    $x = $a;
+}
+```
+
+* TypeCoercionTypedLocalVariableIssue
+  * nearly [ArgumentTypeCoercion](https://psalm.dev/docs/running_psalm/issues/ArgumentTypeCoercion)
+
+eg.
+```php
+class A {}
+class B extends A {}
+
+function takesA(A $a) : void {
+    /** @var B $b */
+    $b = $a;
+}
+```
+
+* InvalidScalarTypedLocalVariableIssue
+  * nearly [InvalidScalarArgument](https://psalm.dev/docs/running_psalm/issues/InvalidScalarArgument/)
+
+* InvalidTypedLocalVariableIssue
+  * nearly [InvalidArgument](https://psalm.dev/docs/running_psalm/issues/InvalidArgument/)
+
+If you want **suppress** specific issue, please setting `psalm.xml` like below.
+
+```xml
+<issueHandlers>
+  <PluginIssue name="MixedTypeCoercionTypedLocalVariableIssue">
+      <errorLevel type="suppress">
+          <file name="src/Foo.php"/>
+      </errorLevel>
+  </PluginIssue>
+</issueHandlers>
+```
+
+## Disclaimer
+This is **Experimental** plugin.
+
 ## Limitation
 
 * NOT support global variables.
@@ -115,12 +169,6 @@ $var1 = 'string'; // cannot determine type for $var1
 $var1 = 'string';
 /** @var bool $var2 */
 $var2 = true;
-```
-
-## Installation
-```
-$ composer require --dev struggle-for-php/sfp-psalm-typed-local-variable-plugin
-$ vendor/bin/psalm-plugin enable struggle-for-php/sfp-psalm-typed-local-variable-plugin
 ```
 
 ## Todo
